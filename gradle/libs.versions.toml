@@ -26,6 +26,7 @@ rxjava = "3.1.9"
 retroift_rxjava = "3.0.0"
 koin_android = "3.4.0"
 coil-compose = "2.4.0"
+accompanist-pager = "0.28.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,7 +61,9 @@ rx-java = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxja
 rxjava-retrofit-adapter = { group = "com.github.akarnokd", name = "rxjava3-retrofit-adapter", version.ref = "retroift_rxjava" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin_android" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil-compose" }
-
+#slider
+accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist-pager" }
+accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist-pager" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

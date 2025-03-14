@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.digikala"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.digikala"
@@ -66,6 +66,10 @@ dependencies {
     implementation(libs.rxjava.retrofit.adapter)
     implementation(libs.koin.android)
     implementation(libs.coil.compose)
+
+//    slider
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

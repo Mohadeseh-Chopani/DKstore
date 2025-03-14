@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">digikala</string>
+    <string name="home">خانه</string>
+    <string name="categorize">دسته‌بندی‌ها</string>
+    <string name="shopping_cart">سبد خرید</string>
+    <string name="my_account">کالای من</string>
 </resources>
