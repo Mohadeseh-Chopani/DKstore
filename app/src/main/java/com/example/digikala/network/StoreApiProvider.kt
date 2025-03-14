@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 class StoreApiProvider {
     companion object {
-        val BASE_URL = "https://one-api.ir/weather/"
+        val BASE_URL = "https://api.one-api.ir/digikala/v1/"
 
         // Create a lenient Gson instance
         val gson = GsonBuilder()
@@ -31,7 +31,7 @@ class StoreApiProvider {
             .build()
 
 
-        fun getApiService(): StoreApiProvider {
+        fun getApiService(): StoreApiService {
             val retrofit: Retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson))
@@ -39,9 +39,9 @@ class StoreApiProvider {
                 .client(okHttpClient)
                 .build()
 
-            val weatherApiService: StoreApiProvider = retrofit.create(StoreApiProvider::class.java)
+            val storeApiService: StoreApiService = retrofit.create(StoreApiService::class.java)
 
-            return weatherApiService
+            return storeApiService
         }
     }
 
