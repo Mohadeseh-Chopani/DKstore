@@ -7,7 +7,7 @@ import retrofit2.http.Query
 
 interface StoreApiService {
     @GET("home")
-    fun getHomeData(
+    suspend fun getHomeData(
         @Query("token") token: String
-    ): Flow<HomePageData>
+    ): HomePageData
 }

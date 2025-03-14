@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +54,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -80,6 +82,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -88,6 +91,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.digikala.R
+import com.example.digikala.network.StoreApiProvider
 import com.example.digikala.ui.theme.DigikalaTheme
 import com.example.digikala.ui.theme.LightGrayColor
 import com.example.digikala.ui.theme.MenuItemColor
@@ -98,8 +102,11 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val homeViewModel: HomeViewModel by viewModel()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -110,7 +117,9 @@ class MainActivity : ComponentActivity() {
                         .background(Color.White)
                         .fillMaxSize()
                 ) { innerPadding ->
-                    BaseStructure(modifier = Modifier.padding(innerPadding))
+                    BaseStructure(
+                        modifier = Modifier.padding(innerPadding), homeViewModel
+                    )
                 }
             }
         }
@@ -119,7 +128,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BaseStructure(modifier: Modifier = Modifier) {
+fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -179,7 +188,7 @@ fun BaseStructure(modifier: Modifier = Modifier) {
                 startDestination = Const.HOME,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Const.HOME) { HomePage(navController) }
+                composable(Const.HOME) { HomePage(navController, homeViewModel) }
                 composable(Const.CATEGORIES) { CategoriesPage(navController) }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage(navController) }
                 composable(Const.PROFILE) { ProfilePage(navController) }
@@ -249,8 +258,13 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun HomePage(navController: NavController) {
+fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
     val scrollState = rememberScrollState()
+    val homeData by homeViewModel.homeData.collectAsState()
+
+    LaunchedEffect(Unit) {
+        homeViewModel.getHomeData(StoreApiProvider.API_KEY)
+    }
 
     var images = listOf(
         R.drawable.ic_launcher_background,
@@ -275,6 +289,7 @@ fun HomePage(navController: NavController) {
             false
         )
 
+//        PopularProducts("داغ ترین چند ساعت گذشته")
         PopularProducts("داغ ترین چند ساعت گذشته")
 
         Spacer(
@@ -900,8 +915,9 @@ fun ProfilePage(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
+    val homeViewModel: HomeViewModel by viewModel()
 //    DigikalaTheme {
-    BaseStructure(modifier = Modifier.background(Color.White))
+    BaseStructure(modifier = Modifier.background(Color.White), homeViewModel)
 //        HomePage(navController = rememberNavController())
 //    RowProductList()
 
