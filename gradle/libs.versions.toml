@@ -26,6 +26,7 @@ rxjava = "3.1.9"
 retroift_rxjava = "3.0.0"
 koin_android = "3.4.0"
 coil-compose = "2.4.0"
+coil-gif = "2.5.0"
 accompanist-pager = "0.28.0"
 
 [libraries]
@@ -64,6 +65,9 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 #slider
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist-pager" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist-pager" }
+
+#gif load
+coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil-gif" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

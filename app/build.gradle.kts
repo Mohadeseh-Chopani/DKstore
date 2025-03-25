@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.rxjava.retrofit.adapter)
     implementation(libs.koin.android)
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
 //    slider
     implementation(libs.accompanist.pager)

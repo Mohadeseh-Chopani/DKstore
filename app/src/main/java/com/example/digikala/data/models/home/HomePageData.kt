@@ -46,7 +46,7 @@ data class Product(
     val category_title: String,
 //    @JsonProperty("title_fa")
     val title_fa: String,
-    val rating: Rating,
+    val rating: Rating?,
     val brand: Brand,
     val status: String,
     val images: Images,
@@ -289,7 +289,7 @@ data class Product3(
     val title_fa: String,
 //    @JsonProperty("title_en")
     val title_en: String,
-    val rating: Rating2,
+    val rating: Rating?,
     val brand: Brand3,
     val status: String,
     val images: Images3,
@@ -312,8 +312,8 @@ data class Product3(
 )
 
 data class Rating2(
-    val rate: Double,
-    val count: Long,
+    val rate: Double?,
+    val count: Long?,
 )
 
 data class Brand3(
@@ -435,7 +435,7 @@ data class Product4(
     val category_title: String,
 //    @JsonProperty("title_fa")
     val title_fa: String,
-    val rating: Rating3,
+    val rating: Rating?,
     val brand: Brand4,
     val status: String,
     val images: Images4,
@@ -456,8 +456,8 @@ data class Product4(
 )
 
 data class Rating3(
-    val rate: Double,
-    val count: Long,
+    val rate: Double?,
+    val count: Long?,
 )
 
 data class Brand4(
@@ -862,7 +862,7 @@ data class Product7(
     val default_variant_id: Long,
 //    @JsonProperty("second_default_variant_id")
     val second_default_variantId: Long,
-    val parameters: List<Any?>,
+    val parameters: Parameters,
 //    @JsonProperty("product_type")
     val product_type: String,
     val properties: Any?,
@@ -1118,7 +1118,7 @@ data class Product9(
     val category_title: String,
 //    @JsonProperty("title_fa")
     val title_fa: String,
-    val rating: Rating4,
+    val rating: Rating,
     val brand: Brand9,
     val status: String,
     val images: Images9,
@@ -1126,7 +1126,7 @@ data class Product9(
     val default_variant_id: Long,
 //    @JsonProperty("second_default_variant_id")
     val second_default_variantId: Long,
-    val parameters: List<Any?>,
+    val parameters: Parameters,
 //    @JsonProperty("product_type")
     val product_type: String,
     val properties: Any?,
@@ -1250,7 +1250,7 @@ data class Product10(
     val category_title: String,
 //    @JsonProperty("title_fa")
     val title_fa: String,
-    val rating: Any?,
+    val rating: Rating,
     val brand: Brand10,
     val status: String,
     val images: Images10,
@@ -1258,7 +1258,7 @@ data class Product10(
     val default_variant_id: Long,
 //    @JsonProperty("second_default_variant_id")
     val second_default_variantId: Long,
-    val parameters: List<Any?>,
+    val parameters: Parameters,
 //    @JsonProperty("product_type")
     val product_type: String,
     val properties: Properties5,
