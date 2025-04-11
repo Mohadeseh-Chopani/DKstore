@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -32,6 +34,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
+        viewBinding = true
         compose = true
     }
 }
@@ -67,10 +70,12 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
+    implementation(libs.navigation)
 
 //    slider
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
+    implementation(libs.play.services.wallet)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

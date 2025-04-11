@@ -1296,9 +1296,9 @@ data class Properties5(
 
 data class Price10(
 //    @JsonProperty("selling_price")
-    val selling_price: Long,
+    val selling_price: Long? = null,
 //    @JsonProperty("rrp_price")
-    val rrp_price: Long,
+    val rrp_price: Long?,
 //    @JsonProperty("order_limit")
     val order_limit: Long,
 //    @JsonProperty("is_promotion")

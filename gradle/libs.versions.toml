@@ -28,6 +28,8 @@ koin_android = "3.4.0"
 coil-compose = "2.4.0"
 coil-gif = "2.5.0"
 accompanist-pager = "0.28.0"
+navigation_material = "0.34.0"
+playServicesWallet = "19.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,12 +64,15 @@ rx-java = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxja
 rxjava-retrofit-adapter = { group = "com.github.akarnokd", name = "rxjava3-retrofit-adapter", version.ref = "retroift_rxjava" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin_android" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil-compose" }
+navigation = { group = "com.google.accompanist", name = "accompanist-navigation-material", version.ref = "navigation_material" }
+
 #slider
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist-pager" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist-pager" }
 
 #gif load
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil-gif" }
+play-services-wallet = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "playServicesWallet" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
