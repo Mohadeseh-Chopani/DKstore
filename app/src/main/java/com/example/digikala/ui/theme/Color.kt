@@ -11,7 +11,7 @@ val BackgroundColor = Color(0xFFF2F2F2)
 val Green = Color(0xFFDEFBDF)
 val DarkGreen = Color(0xFF528658)
 val StarColor = Color(0xFFFFC107)
-val LightBlue = Color(0xFF57A49C)
+val LightBlue = Color(0xFF00BCD4)
 
 val Purple40 = Color(0xFFED1944)
 val PurpleGrey40 = Color(0xFF625b71)

@@ -46,6 +46,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -262,8 +263,10 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
     if (currentRoute(navController) == Const.PRODUCT_DETAILS) {
 
         Surface(
-            tonalElevation = 4.dp,
-            shadowElevation = 8.dp
+            modifier = Modifier
+                .background(Color.White),
+//            tonalElevation = 2.dp,
+//            shadowElevation = 2.dp
         ) {
             Row(
                 modifier = Modifier
@@ -305,37 +308,38 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
                 .fillMaxWidth(),
             containerColor = (Color.White)
         ) {
-            BottomNavigationItem().bottomNavigationItem(context = context).forEachIndexed { index, navigationItem ->
+            BottomNavigationItem().bottomNavigationItem(context = context)
+                .forEachIndexed { index, navigationItem ->
 
-                NavigationBarItem(
-                    selected = index == itemSelected,
-                    label = {
-                        Text(navigationItem.label)
-                    },
-                    icon = {
-                        Icon(
-                            navigationItem.icon,
-                            contentDescription = navigationItem.label
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = Color.DarkGray, // Icon color when not selected
-                        selectedTextColor = Color.Black, // Label color when selected
-                        unselectedTextColor = Color.DarkGray, // Label color when not selected
-                        indicatorColor = MenuItemColor // Background color of selected item
-                    ),
-                    onClick = {
-                        itemSelected = index
-                        navController.navigate(navigationItem.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+                    NavigationBarItem(
+                        selected = index == itemSelected,
+                        label = {
+                            Text(navigationItem.label)
+                        },
+                        icon = {
+                            Icon(
+                                navigationItem.icon,
+                                contentDescription = navigationItem.label
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            unselectedIconColor = Color.DarkGray, // Icon color when not selected
+                            selectedTextColor = Color.Black, // Label color when selected
+                            unselectedTextColor = Color.DarkGray, // Label color when not selected
+                            indicatorColor = MenuItemColor // Background color of selected item
+                        ),
+                        onClick = {
+                            itemSelected = index
+                            navController.navigate(navigationItem.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                )
-            }
+                    )
+                }
         }
     }
 }
@@ -378,7 +382,7 @@ fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
                     ImageSlider(
                         images = listOf(
                             MainBanner(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/71a4767cadf6b16bb0d31bfa2e6e4905c5336622_1741782042.jpg?x-oss-process=image/quality,q_95/format,webp"
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/afa47bf9e31bbb25d78bf4a7e5b4028759df823e_1744440856.jpg?x-oss-process=image/quality,q_95/format,webp"
                             ),
                             MainBanner(
                                 "https://dkstatics-public.digikala.com/digikala-adservice-banners/832f867ccd35f749becea69a10edf5f32d0fe144_1742021801.jpg?x-oss-process=image/quality,q_95/format,webp"
@@ -625,7 +629,11 @@ fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
 @ExperimentalPagerApi
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ImageSlider(images: List<MainBanner>, intervalMillis: Long = 5000, disableIndicator: Boolean = false) {
+fun ImageSlider(
+    images: List<MainBanner>,
+    intervalMillis: Long = 5000,
+    disableIndicator: Boolean = false
+) {
     val pagerState = rememberPagerState(images.size)
     val coroutineScope = rememberCoroutineScope()
 
@@ -694,7 +702,11 @@ fun ImageSlider(images: List<MainBanner>, intervalMillis: Long = 5000, disableIn
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun productSliderTrending(titleHeader: String, products: List<Product>, navController: NavController) {
+fun productSliderTrending(
+    titleHeader: String,
+    products: List<Product>,
+    navController: NavController
+) {
     val pagerState = rememberPagerState(4)
 
     Log.i("MOX", "PopularProducts: " + products.size)
@@ -1972,7 +1984,7 @@ fun ProductInformation() {
             ) {
                 item {
                     Row {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = Color.Yellow)
+                        Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
                         Text(
                             "4",
                             modifier = Modifier
@@ -2082,17 +2094,16 @@ fun ProductColorList() {
                             .fillMaxSize(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        AndroidView(
-                           factory = {context ->
-                               ImageView(context).apply {
-                                   setBackgroundColor(R.color.purple_200)
-                               }
-                           },
-                            Modifier.width(24.dp)
-                                .height(24.dp)
-                                .padding(horizontal = 6.dp, vertical = 8.dp)
-                        )
 
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                .size(20.dp)
+                                .background(
+                                    color = Color.Red,
+                                    shape = CircleShape
+                                )
+                        )
                         Text(
                             modifier = Modifier
                                 .padding(end = 12.dp),
@@ -2235,7 +2246,7 @@ fun ReviewItem(review: Review) {
             .width(300.dp)
             .height(300.dp)
             .padding(horizontal = 8.dp)
-            .border(0.2.dp, Color.Gray, RoundedCornerShape(8.dp)),
+            .border(0.2.dp, Color.LightGray, RoundedCornerShape(8.dp)),
         shape = RoundedCornerShape(8.dp),
     ) {
         Column(
@@ -2329,8 +2340,8 @@ fun QuestionItem(question: Question) {
             .padding(bottom = 20.dp)
             .padding(horizontal = 4.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
-            .border(1.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
-        elevation = 4.dp
+            .border(0.2.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
+        elevation = 2.dp
     ) {
         Column(
             modifier = Modifier
@@ -2339,7 +2350,10 @@ fun QuestionItem(question: Question) {
             horizontalAlignment = Alignment.Start
         ) {
             Row {
-                Icon(Icons.Default.Star, contentDescription = null)
+                Image(
+                    painter = painterResource(R.drawable.question_icon),
+                    contentDescription = "icon_title"
+                )
 
                 Text(
                     text = question.question,
