@@ -5,15 +5,16 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import com.google.accompanist.pager.rememberPagerState
@@ -41,17 +43,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -72,11 +69,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -85,7 +82,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -119,8 +115,10 @@ import com.example.digikala.data.models.home.HomePageData
 import com.example.digikala.data.models.home.MainBanner
 import com.example.digikala.data.models.home.Product
 import com.example.digikala.data.models.home.Product2
+import com.example.digikala.data.models.product.LatestComment
+import com.example.digikala.data.models.product.LatestQuestion
+import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.databinding.ProductInfoSectionBinding
-//import com.example.digikala.data.models.home.Product2
 import com.example.digikala.network.StoreApiProvider
 import com.example.digikala.ui.theme.BackgroundColor
 import com.example.digikala.ui.theme.DarkGreen
@@ -132,32 +130,39 @@ import com.example.digikala.ui.theme.PrimaryColor
 import com.example.digikala.ui.theme.StarColor
 import com.example.digikala.utils.BottomNavigationItem
 import com.example.digikala.utils.Const
+import com.example.digikala.utils.LocalProvider
 import com.example.digikala.utils.NetworkState
-import com.google.accompanist.navigation.material.BottomSheetNavigator
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
-import com.google.accompanist.navigation.material.rememberBottomSheetNavigator
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
-import com.google.android.gms.wallet.button.ButtonConstants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModel()
+    private val productViewModel: ProductViewModel by viewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            Scaffold(
-                modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxSize()
-            ) { innerPadding ->
-                BaseStructure(
-                    modifier = Modifier.padding(innerPadding), homeViewModel
-                )
+            CompositionLocalProvider(
+                LocalProvider.LocalProductViewModel provides productViewModel
+            ) {
+                Scaffold(
+                    modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxSize()
+                ) { innerPadding ->
+                    BaseStructure(
+                        modifier = Modifier.padding(innerPadding), homeViewModel
+                    )
+                }
             }
         }
     }
@@ -708,6 +713,7 @@ fun productSliderTrending(
     navController: NavController
 ) {
     val pagerState = rememberPagerState(4)
+    val productViewModel = LocalProvider.LocalProductViewModel.current
 
     Log.i("MOX", "PopularProducts: " + products.size)
     Column(
@@ -758,6 +764,7 @@ fun productSliderTrending(
                             .border(0.2.dp, Color.Gray, RoundedCornerShape(8.dp)),
                         shape = RoundedCornerShape(8.dp),
                         onClick = {
+                            productViewModel.getProductData(products[i].id)
                             navController.navigate(Const.PRODUCT_DETAILS) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
@@ -940,7 +947,7 @@ fun ProductItem(
     width: Dp, height: Dp,
     imageRes: String,
     title: String,
-    price: Long,
+    price: Long?,
     discount: Long?,
     oldPrice: Long?,
     modifier: Modifier = Modifier
@@ -1056,16 +1063,6 @@ fun ProductItem(
     }
 }
 
-//val productsList = listOf(
-//    Product(R.drawable.ic_launcher_background, "هدفون بلوتوثی سامسونگ Galaxy Buds3 Pro", "10,390,000 تومان"),
-//    Product(
-//        R.drawable.ic_launcher_background,
-//        "هدفون مخصوص بازی بی سیم ریمکس مدل G1",
-//        "1,590,000 تومان",
-//        "21%",
-//        "2,000,000 تومان"
-//    )
-//)
 
 @Composable
 fun RowProductList1(result: Home1) {
@@ -1111,54 +1108,56 @@ fun RowProductList1(result: Home1) {
                     height = itemHeight,
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
+                    price = result.products.get(product).price?.selling_price,
                     discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price?.rrp_price
                 )
             }
 
             item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
+                showAllItem(itemWidth, itemHeight)
             }
-
-
         }
+    }
+}
 
+@Composable
+fun showAllItem(itemWidth: Dp, itemHeight: Dp) {
+    Card(
+        modifier = Modifier
+            .width(itemWidth)
+            .height(itemHeight)
+            .padding(4.dp),
+        shape = RoundedCornerShape(12.dp),
+        backgroundColor = Color.White,
+        elevation = 0.dp,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .border(1.dp, color = Color.Gray, shape = CircleShape)
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "مشاهده همه",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = Color.Black
+                )
+            }
+        }
     }
 }
 
@@ -1490,9 +1489,9 @@ fun RowProductList5(result: Home5) {
                     height = itemHeight,
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
+                    price = result.products.get(product).price?.selling_price,
                     discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price?.rrp_price
                 )
             }
 
@@ -1864,27 +1863,71 @@ fun searchBox() {
 @OptIn(ExperimentalMaterialNavigationApi::class)
 @Composable
 fun ProductDetails(navController: NavController) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    )
-    {
-        item {
-            ProductPageSlider()
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val productData = productViewModel.productData.collectAsState()
+    val data: ProductPageData
+
+    when (productData.value) {
+        is NetworkState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryColor)
+            }
         }
-        item {
-            ProductInformation()
+
+        is NetworkState.Success -> {
+            data = (productData.value as NetworkState.Success<ProductPageData>).data
+            Log.i("MOX", "ProductDetails: " + data.result.product)
+            ProductPageDesign(data)
+        }
+
+        is NetworkState.UnSuccess -> {
+
+        }
+
+        is NetworkState.Failure -> {
+
         }
     }
 }
 
+@Composable
+fun ProductPageDesign(data: ProductPageData) {
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        state = listState,
+        horizontalAlignment = Alignment.CenterHorizontally
+    )
+    {
+        item(key = "slider") {
+            ProductPageSlider(data)
+        }
+        item(key = "information") {
+            ProductInformation(data,
+                moveOnItemClick = {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(index = 3)
+                    }
+                }
+            )
+        }
+    }
+}
+
+
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProductPageSlider(intervalMillis: Long = 8000) {
+fun ProductPageSlider(sliderData: ProductPageData) {
+    val intervalMillis: Long = 8000
     val images = listOf(
-        R.drawable.ic_launcher_background,
-        R.drawable.ic_launcher_background
+        sliderData.result.product.images,
+//        sliderData.result.product.images.image_list
     )
 
     val pagerState = rememberPagerState(images.size)
@@ -1910,13 +1953,11 @@ fun ProductPageSlider(intervalMillis: Long = 8000) {
         count = images.size
     ) {
         Image(
-            painter = painterResource(images[it]),
+            painter = rememberAsyncImagePainter(images.get(it).main),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 20.dp, bottom = 8.dp, end = 20.dp, start = 20.dp)
-                .shadow(8.dp, shape = RoundedCornerShape(8.dp)),
+                .padding(top = 20.dp, bottom = 8.dp, end = 20.dp, start = 20.dp),
             contentDescription = null,
-            contentScale = ContentScale.Crop
         )
     }
 
@@ -1931,7 +1972,7 @@ fun ProductPageSlider(intervalMillis: Long = 8000) {
 }
 
 @Composable
-fun ProductInformation() {
+fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () -> Unit) {
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Column(
@@ -1947,7 +1988,7 @@ fun ProductInformation() {
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
-                    text = "گوشی موبایل سامسونگ",
+                    text = productInformation.result.product.brand.title_fa,
                     color = LightBlue,
                     fontSize = 16.sp
                 )
@@ -1961,7 +2002,7 @@ fun ProductInformation() {
                 )
 
                 Text(
-                    text = "سامسونگ",
+                    text = productInformation.result.product.category_title,
                     color = LightBlue,
                     textAlign = TextAlign.Right,
                     fontSize = 16.sp
@@ -1969,43 +2010,20 @@ fun ProductInformation() {
             }
 
             Text(
-                "title",
+                text = productInformation.result.product.title_fa,
                 color = Color.Black,
                 fontSize = 22.sp,
                 modifier = Modifier
                     .padding(horizontal = 18.dp)
             )
 
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp, horizontal = 18.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                item {
-                    Row {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
-                        Text(
-                            "4",
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .align(Alignment.CenterVertically),
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            "(امتیاز 36 خریدار)",
-                            color = Color.Gray,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
-                    }
-                }
-                items(1) {
-                    UserActionButton("31 دیدگاه")
-                    UserActionButton("4 پرسش و پاسخ")
-                    UserActionButton("4 پرسش و پاسخ")
-                    UserActionButton("4 پرسش و پاسخ")
-                }
-            }
+            ProductActionsRow(
+                stars = productInformation.result.product.variants.get(0).seller.stars,
+                ratingCount = productInformation.result.product.rating.count,
+                commentCount = productInformation?.result?.product?.comments?.count,
+                questionCount = productInformation?.result?.product?.questions?.count,
+                onItemClick = moveOnItemClick
+            )
 
             LazyRow(
                 modifier = Modifier
@@ -2013,14 +2031,17 @@ fun ProductInformation() {
                     .padding(start = 18.dp, end = 5.dp, bottom = 20.dp),
                 horizontalArrangement = Arrangement.Start
             ) {
-                items(1) {
-                    ProductSpecificationsButton("کاربرد", " محافظت,ضد حساسیت")
-                    ProductSpecificationsButton("جنس محفظه نگهدارنده", " پلاستیک")
-                    ProductSpecificationsButton("مبدا", "ایران")
+                if (productInformation.result.product.review.attributes != null) {
+                    items(productInformation.result.product.review.attributes.size) {
+                        val data = productInformation.result.product.review.attributes
+                        ProductSpecificationsButton(data.get(it).title, data.get(it).values.get(0))
+
+                    }
                 }
             }
 
-            ProductColorList()
+            val data = productInformation.result.product.variants.get(0).color
+            if (data != null) ProductColorList(productInformation)
 
             Spacer(
                 modifier = Modifier
@@ -2029,21 +2050,99 @@ fun ProductInformation() {
                     .background(LightGrayColor)
             )
 
-            ProductInfoXmlView()
+            ProductInfoXmlView(productInformation)
 
-            ProductDetailsScreen()
+            ProductDetailsScreen(productInformation)
+        }
+    }
+}
+
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
+@Composable
+fun ProductActionsRow(
+    stars: Double,
+    ratingCount: Double,
+    commentCount: Int?,
+    questionCount: Int?,
+    onItemClick: () -> Unit
+) {
+    val itemList = mutableListOf<@Composable () -> Unit>()
+
+    // آیتم امتیاز
+    itemList.add {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
+            Text(
+                text = DisplayNumber(stars),
+                modifier = Modifier.padding(horizontal = 8.dp),
+                fontSize = 18.sp
+            )
+            Text(
+                text = "(امتیاز ${formatNumberToPersian(ratingCount)} خریدار)",
+                color = Color.Gray
+            )
+        }
+    }
+
+    // آیتم دیدگاه‌ها
+    commentCount?.takeIf { it > 0 }?.let {
+        itemList.add {
+            UserActionButton("${formatNumberToPersian(it.toDouble())} دیدگاه ها", onClick = onItemClick)
+        }
+    }
+
+    // آیتم پرسش و پاسخ
+    questionCount?.takeIf { it > 0 }?.let {
+        itemList.add {
+            UserActionButton("${formatNumberToPersian(it.toDouble())} پرسش و پاسخ", onClick = onItemClick)
+        }
+    }
+
+    val arrangement = if (itemList.size <= 3) Arrangement.Start else Arrangement.SpaceEvenly
+
+    AnimatedContent(targetState = itemList.size, label = "lazyRowAnimation") {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp, horizontal = 18.dp),
+            horizontalArrangement = arrangement,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(itemList.size) { index ->
+                itemList[index]()
+            }
         }
     }
 }
 
 
+fun formatNumberToPersian(value: Double): String {
+    val decimalFormat = DecimalFormat("#.#", DecimalFormatSymbols(Locale("fa", "IR")))
+    return decimalFormat.format(value)
+}
+
+fun DisplayNumber(number: Double): String {
+    val formattedRate = formatNumberToPersian(number)
+    return formattedRate
+}
+
 @Composable
-fun UserActionButton(title: String) {
+fun UserActionButton(title: String, onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val boxColor = if (isPressed) Color.Gray else LightGrayColor
+
     Box(
         modifier = Modifier
             .padding(horizontal = 4.dp)
-            .background(LightGrayColor, shape = RoundedCornerShape(15.dp))
+            .background(boxColor, shape = RoundedCornerShape(15.dp))
             .padding(horizontal = 4.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onClick()
+            }
     ) {
         Row(
             modifier = Modifier
@@ -2062,7 +2161,15 @@ fun UserActionButton(title: String) {
 
 @SuppressLint("ResourceAsColor")
 @Composable
-fun ProductColorList() {
+fun ProductColorList(colorData: ProductPageData) {
+    val lastColor = rememberSaveable() { mutableStateOf("") }
+
+    val variants = colorData.result.product.variants
+
+    val filteredVariants = variants.filter {
+        it.color.title_fa != lastColor.value
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2074,7 +2181,7 @@ fun ProductColorList() {
                 fontSize = 19.sp
             )
             Text(
-                text = "سفید",
+                text = filteredVariants.get(0).color.title_fa,
                 fontSize = 19.sp
             )
         }
@@ -2083,11 +2190,13 @@ fun ProductColorList() {
             modifier = Modifier
                 .padding(top = 12.dp)
         ) {
-            items(2) {
-                Box(
+            items(filteredVariants.size) {
+                Card(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .border(1.dp, color = LightBlue, shape = RoundedCornerShape(15.dp))
+                        .border(1.dp, color = Color.LightGray, shape = RoundedCornerShape(15.dp)),
+                    shape = RoundedCornerShape(15.dp),
+                    elevation = 2.dp
                 ) {
                     Row(
                         modifier = Modifier
@@ -2098,16 +2207,18 @@ fun ProductColorList() {
                         Box(
                             modifier = Modifier
                                 .padding(horizontal = 8.dp, vertical = 6.dp)
-                                .size(20.dp)
+                                .size(22.dp)
+                                .border(1.dp, color = Color.LightGray, shape = CircleShape)
                                 .background(
-                                    color = Color.Red,
+                                    color = Color(android.graphics.Color.parseColor(filteredVariants[it].color.hex_code)),
                                     shape = CircleShape
                                 )
                         )
+//                        lastColor.value = colorData.result.product.variants[it].color.title_fa
                         Text(
                             modifier = Modifier
                                 .padding(end = 12.dp),
-                            text = "قرمز"
+                            text = lastColor.value
                         )
                     }
                 }
@@ -2148,7 +2259,7 @@ fun ProductSpecificationsButton(title: String, feature: String) {
 }
 
 @Composable
-fun ProductInfoXmlView() {
+fun ProductInfoXmlView(sellerData: ProductPageData) {
 
     var productInfoBinding: ProductInfoSectionBinding? = null
 
@@ -2156,6 +2267,8 @@ fun ProductInfoXmlView() {
         factory = { context ->
             productInfoBinding = ProductInfoSectionBinding.inflate(LayoutInflater.from(context))
             productInfoBinding!!.root
+
+//            productInfoBinding!!.sellerName.text = sellerData.result.product.variants.get(0).seller.title_fa
         },
         modifier = Modifier
             .fillMaxWidth()
@@ -2165,30 +2278,15 @@ fun ProductInfoXmlView() {
     }
 }
 
-data class Review(
-    val username: String,
-    val rating: Int,
-    val comment: String,
-    val date: String
-)
-
-data class Question(
-    val question: String,
-    val answer: String?,
-    val date: String
-)
-
 @Composable
-fun ProductDetailsScreen() {
-    val reviews = listOf(
-        Review("کاربر دیجی‌کالا", 5, "کرم عالی برای بچه‌ها", "۳۰ شهریور"),
-        Review("زهرا علیزاده", 1, "ناراضی بودم", "۱ خرداد")
-    )
+fun ProductDetailsScreen(questionAndCommentData: ProductPageData) {
 
-    val questions = listOf(
-        Question("سلام انقضا؟", "1406/03", "امروز"),
-        Question("سلام تاریخ انقضا محصول؟", "سلام وقت بخیر 1406/03", "امروز")
-    )
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.30f
+    val itemHeight = screenWidth * 0.50f
+
+    val questions = questionAndCommentData.result.product.questions
+    val comments = questionAndCommentData.result.product.comments
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Column(
@@ -2197,29 +2295,50 @@ fun ProductDetailsScreen() {
         ) {
 
 
-            SectionTitle(title = "دیدگاه‌ها")
+            comments?.latest_comments?.size?.let {
+                SectionTitle(title = "دیدگاه‌ها")
 
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                items(reviews.size) { index ->
-                    ReviewItem(reviews[index])
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    items(it) { index ->
+                        comments.latest_comments.get(index).let { ReviewItem(it) }
+                    }
+
+
+                    comments?.latest_comments?.let {
+                        if (comments?.count!! > comments?.latest_comments?.size!!) {
+                            item {
+                                showAllItem(itemWidth, itemHeight)
+                            }
+                        }
+                    }
                 }
             }
 
 
-            SectionTitle(title = "پرسش و پاسخ")
+            questions?.latest_questions?.size?.let {
+                SectionTitle(title = "پرسش و پاسخ")
 
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            )
-            {
-                items(questions.size) { question ->
-                    QuestionItem(questions[question])
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                )
+                {
+                    items(it) { index ->
+                        QuestionItem(questions.latest_questions.get(index))
+                    }
+
+                    questions?.latest_questions?.let {
+                        if (questions?.count!! > questions?.latest_questions?.size!!) {
+                            item {
+                                showAllItem(itemWidth, itemHeight)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2240,11 +2359,11 @@ fun SectionTitle(title: String) {
 }
 
 @Composable
-fun ReviewItem(review: Review) {
+fun ReviewItem(review: LatestComment) {
     Card(
         modifier = Modifier
             .width(300.dp)
-            .height(300.dp)
+            .height(200.dp)
             .padding(horizontal = 8.dp)
             .border(0.2.dp, Color.LightGray, RoundedCornerShape(8.dp)),
         shape = RoundedCornerShape(8.dp),
@@ -2263,7 +2382,7 @@ fun ReviewItem(review: Review) {
             ) {
 
                 Text(
-                    text = review.username,
+                    text = review.user_name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color.DarkGray,
@@ -2293,7 +2412,7 @@ fun ReviewItem(review: Review) {
                 horizontalArrangement = Arrangement.Start,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                repeat(review.rating) {
+                repeat(review.rate.toInt()) {
                     Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
                 }
             }
@@ -2305,10 +2424,10 @@ fun ReviewItem(review: Review) {
             )
 
             Text(
-                text = review.comment,
+                text = review.body,
                 textAlign = TextAlign.Right,
                 fontSize = 14.sp,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -2320,7 +2439,7 @@ fun ReviewItem(review: Review) {
             )
 
             Text(
-                text = review.date,
+                text = review.created_at,
                 color = Color.Gray,
                 fontSize = 14.sp,
                 modifier = Modifier.fillMaxWidth(),
@@ -2331,12 +2450,12 @@ fun ReviewItem(review: Review) {
 }
 
 @Composable
-fun QuestionItem(question: Question) {
+fun QuestionItem(question: LatestQuestion) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .width(280.dp)
-            .height(150.dp)
+            .height(200.dp)
             .padding(bottom = 20.dp)
             .padding(horizontal = 4.dp)
             .background(color = Color.White, shape = RoundedCornerShape(8.dp))
@@ -2356,32 +2475,34 @@ fun QuestionItem(question: Question) {
                 )
 
                 Text(
-                    text = question.question,
+                    text = question.text,
                     textAlign = TextAlign.Right,
                     fontSize = 16.sp,
+                    maxLines = 3,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
                 )
             }
-            if (!question.answer.isNullOrEmpty()) {
+            if (question.last_answer?.text != null) {
                 Text(
-                    text = "پاسخ: ${question.answer}",
+                    text = "پاسخ: ${question.last_answer?.text} ",
                     textAlign = TextAlign.Right,
                     color = Color.Gray,
                     fontSize = 16.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
             Text(
-                text = question.date,
+                text = question.created_at,
                 fontSize = 12.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Right,
                 modifier = Modifier.fillMaxWidth()
+                    .padding(top = 10.dp)
             )
         }
     }
@@ -2390,7 +2511,7 @@ fun QuestionItem(question: Question) {
 @Preview
 @Composable
 fun PreviewProductInfoScreen() {
-    ProductInfoXmlView()
+//    ProductInfoXmlView()
 }
 
 

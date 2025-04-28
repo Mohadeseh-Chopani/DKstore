@@ -3,14 +3,11 @@ package com.example.digikala.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.digikala.data.models.home.HomePageData
-import com.example.digikala.data.repository.HomeRepository
 import com.example.digikala.data.repository.HomeRepositoryImp
 import com.example.digikala.utils.NetworkState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 

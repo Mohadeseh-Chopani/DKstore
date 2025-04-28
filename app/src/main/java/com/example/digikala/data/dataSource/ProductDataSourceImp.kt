@@ -1,7 +1,7 @@
 package com.example.digikala.data.dataSource
 
 import android.util.Log
-import com.example.digikala.data.models.home.HomePageData
+import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.network.StoreApiService
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
-class HomePageDataSourceImp(val apiService: StoreApiService) : HomePageDataSource {
-    override suspend fun getHomePageData(token: String): Flow<HomePageData> = flow {
-        val response = apiService.getHomePageData(token)
+class ProductDataSourceImp(val apiService: StoreApiService): ProductDataSource {
+    override suspend fun getProductContent(id: Long): Flow<ProductPageData> = flow{
+        val response = apiService.getProductContent(id)
 
         if (!response.isSuccessful) {
             throw Exception("Server returned error: ${response.code()}")
@@ -25,8 +25,9 @@ class HomePageDataSourceImp(val apiService: StoreApiService) : HomePageDataSourc
         val transformedJsonString = transformJson(jsonString)
         Log.d("HomePageDataSourceImp", "Transformed JSON: $transformedJsonString")
 
-        val homeData = Gson().fromJson(transformedJsonString, HomePageData::class.java)
-        emit(homeData)
+        val productData = Gson().fromJson(transformedJsonString, ProductPageData::class.java)
+
+        emit(productData)
     }.flowOn(Dispatchers.IO)
 
     private fun transformJson(jsonString: String): String {
@@ -38,7 +39,7 @@ class HomePageDataSourceImp(val apiService: StoreApiService) : HomePageDataSourc
             }
             jsonElement.toString()
         } catch (e: Exception) {
-            Log.e("HomePageDataSourceImp", "Error parsing JSON: ${e.message}")
+            Log.e("ProductPageDataSourceImp", "Error parsing JSON: ${e.message}")
             jsonString
         }
     }

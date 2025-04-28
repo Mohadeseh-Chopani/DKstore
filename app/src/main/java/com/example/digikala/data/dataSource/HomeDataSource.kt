@@ -4,7 +4,6 @@ import com.example.digikala.data.models.home.HomePageData
 import kotlinx.coroutines.flow.Flow
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.Query
 
 interface HomePageDataSource {
     @GET("home")

@@ -303,7 +303,7 @@ data class Product3(
     val properties: Properties2,
 //    @JsonProperty("product_badges")
     val product_badges: List<ProductBadge5>,
-    val price: Price3,
+    val price: Price3?,
     val digiplus: Digiplus2,
 //    @JsonProperty("product_badge")
     val product_badge: ProductBadge6,
@@ -363,7 +363,7 @@ data class Payload3(
 
 data class Price3(
 //    @JsonProperty("selling_price")
-    val selling_price: Long,
+    val selling_price: Long?,
 //    @JsonProperty("rrp_price")
     val rrp_price: Long,
 //    @JsonProperty("order_limit")
@@ -866,7 +866,7 @@ data class Product7(
 //    @JsonProperty("product_type")
     val product_type: String,
     val properties: Any?,
-    val price: Price7,
+    val price: Price7?,
     val digiplus: Digiplus6,
 //    @JsonProperty("product_badge")
     val product_badge: ProductBadge13?,
@@ -883,7 +883,7 @@ data class Images7(
 
 data class Price7(
 //    @JsonProperty("selling_price")
-    val selling_price: Long,
+    val selling_price: Long?,
 //    @JsonProperty("rrp_price")
     val rrp_price: Long,
 //    @JsonProperty("order_limit")
@@ -970,7 +970,7 @@ data class Product8(
     val default_variant_id: Long,
 //    @JsonProperty("second_default_variant_id")
     val second_default_variantId: Long,
-    val parameters: Parameters5,
+    val parameters: Parameters5?,
 //    @JsonProperty("product_type")
     val product_type: String,
     val properties: Properties4,
