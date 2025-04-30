@@ -222,7 +222,7 @@ data class Grade(
 )
 
 data class Digiclub(
-    val point: Double,
+    val point: Int,
 )
 
 data class Price2(

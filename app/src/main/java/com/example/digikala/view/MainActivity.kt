@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -92,6 +93,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -2260,7 +2262,7 @@ fun ProductSpecificationsButton(title: String, feature: String) {
 
 @Composable
 fun ProductInfoXmlView(sellerData: ProductPageData) {
-
+    val data = sellerData.result.product.variants.get(0)
     var productInfoBinding: ProductInfoSectionBinding? = null
 
     AndroidView(
@@ -2268,13 +2270,82 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
             productInfoBinding = ProductInfoSectionBinding.inflate(LayoutInflater.from(context))
             productInfoBinding!!.root
 
-//            productInfoBinding!!.sellerName.text = sellerData.result.product.variants.get(0).seller.title_fa
         },
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
     ) {
+        productInfoBinding?.apply {
+            sellerName.text = "فروشنده:  ${data.seller.title_fa}"
+            customerSatisfaction.text = "${data.seller.grade.label}"
+            val colorInt = android.graphics.Color.parseColor(data.seller.grade.color)
+            customerSatisfaction.setTextColor(colorInt)
+            spacialService.text = data.warranty.title_fa
+            availableInStock.text = data.shipment_methods.description
 
+            sendProduct.setContent {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    data.shipment_methods.providers.forEach { provider ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(provider.image),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = provider.title,
+                                fontSize = 13.sp,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold
+                                )
+                        }
+                    }
+                }
+            }
+
+            digiclubScore.text = "${data.digiclub.point} امتیاز در دیجی کلاب دریافت می کنید "
+
+            if (sellerData.result.product.digiplus.services == null) {
+                digiplusConst.visibility = View.GONE
+            } else {
+                digiplusServices.setContent {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        sellerData.result.product.digiplus.service_list.forEach { provider ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = provider.title,
+                                    fontSize = 13.sp,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            technicalBox.setContent {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    Text(text = "مشخصات فنی",
+                        fontSize = 15.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        Icons.Default.KeyboardArrowLeft,
+                        contentDescription = null,
+                        modifier = Modifier
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -2368,82 +2439,70 @@ fun ReviewItem(review: LatestComment) {
             .border(0.2.dp, Color.LightGray, RoundedCornerShape(8.dp)),
         shape = RoundedCornerShape(8.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-
-                Text(
-                    text = review.user_name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.DarkGray,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .background(Green, shape = RoundedCornerShape(20.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "خریداران",
-                        color = DarkGreen,
-                        textAlign = TextAlign.Center
+                        text = review.user_name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp)
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .background(Green, shape = RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "خریداران",
+                            color = DarkGreen,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-            }
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            )
 
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                repeat(review.rate.toInt()) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    repeat(review.rate.toInt()) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = review.body,
+                    textAlign = TextAlign.Right,
+                    fontSize = 14.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            )
-
-            Text(
-                text = review.body,
-                textAlign = TextAlign.Right,
-                fontSize = 14.sp,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            )
 
             Text(
                 text = review.created_at,
                 color = Color.Gray,
                 fontSize = 14.sp,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Right
+                textAlign = TextAlign.Right,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 8.dp)
             )
         }
     }
@@ -2462,47 +2521,51 @@ fun QuestionItem(question: LatestQuestion) {
             .border(0.2.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
         elevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row {
-                Image(
-                    painter = painterResource(R.drawable.question_icon),
-                    contentDescription = "icon_title"
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Row {
+                    Image(
+                        painter = painterResource(R.drawable.question_icon),
+                        contentDescription = "icon_title"
+                    )
+                    Text(
+                        text = question.text,
+                        textAlign = TextAlign.Right,
+                        fontSize = 14.sp,
+                        maxLines = 3,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
 
-                Text(
-                    text = question.text,
-                    textAlign = TextAlign.Right,
-                    fontSize = 16.sp,
-                    maxLines = 3,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
+                if (question.last_answer?.text != null) {
+                    Text(
+                        text = "پاسخ: ${question.last_answer?.text}",
+                        textAlign = TextAlign.Right,
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        maxLines = 2,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
-            if (question.last_answer?.text != null) {
-                Text(
-                    text = "پاسخ: ${question.last_answer?.text} ",
-                    textAlign = TextAlign.Right,
-                    color = Color.Gray,
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
+
             Text(
                 text = question.created_at,
                 fontSize = 12.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Right,
-                modifier = Modifier.fillMaxWidth()
-                    .padding(top = 10.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 14.dp)
             )
         }
     }
