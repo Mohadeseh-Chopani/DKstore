@@ -33,7 +33,6 @@ class StoreApiProvider {
                 }
 
                 override fun read(reader: JsonReader?): T? {
-                    // بررسی نوع داده (آرایه یا شیء)
                     if (reader == null) return null
 
                     when (reader.peek()) {
@@ -42,20 +41,20 @@ class StoreApiProvider {
                             reader.beginArray()
                             if (!reader.hasNext()) {
                                 reader.endArray()
-                                return null // آرایه خالی را به نال تبدیل می‌کنیم
+                                return null
                             }
                             return delegateAdapter.read(reader)
                         }
 
                         JsonToken.BEGIN_OBJECT -> {
                             reader.beginObject()
-                            return delegateAdapter.read(reader) // شیء را دسیریالایز می‌کنیم
+                            return delegateAdapter.read(reader)
                         }
 
                         JsonToken.NAME -> {
                             reader.nextName()
                         }
-                        else -> return delegateAdapter.read(reader) // اگر چیز دیگری بود، از دیفالت استفاده می‌کنیم
+                        else -> return delegateAdapter.read(reader)
                     }
                     return TODO("Provide the return value")
                 }

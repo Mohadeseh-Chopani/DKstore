@@ -4,26 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layoutDirection="rtl"
-    android:padding="16dp">
+    android:layoutDirection="rtl">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:divider="?android:attr/dividerHorizontal"
         android:dividerPadding="8dp"
-
         android:layoutDirection="rtl"
-        android:orientation="vertical"
-        android:showDividers="middle">
+        android:orientation="vertical">
 
         <!-- SellerInfoCard -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_marginBottom="8dp"
-            card_view:cardElevation="2dp">
+            android:layout_marginBottom="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -35,6 +30,8 @@
                     android:id="@+id/seller_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
 
 
@@ -47,12 +44,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="عملکرد  "
+                        android:textSize="16sp"
                         android:textColor="#81858b" />
 
                     <TextView
                         android:id="@+id/customer_satisfaction"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"/>
 
                 </LinearLayout>
 
@@ -63,8 +62,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            card_view:cardElevation="2dp">
+            android:layout_marginBottom="4dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -76,6 +74,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
+                    android:textSize="17sp"
+                    android:textColor="@color/black"
                     card_view:layout_constraintBottom_toBottomOf="parent"
                     card_view:layout_constraintEnd_toEndOf="parent"
                     card_view:layout_constraintHorizontal_bias="0.0"
@@ -87,6 +87,7 @@
                     android:id="@+id/product_return"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textSize="17sp"
                     card_view:layout_constraintBottom_toBottomOf="parent"
                     card_view:layout_constraintEnd_toEndOf="parent"
                     card_view:layout_constraintHorizontal_bias="0.0"
@@ -100,8 +101,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            card_view:cardElevation="2dp">
+            android:layout_marginBottom="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -114,7 +114,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
-                    android:textStyle="bold" />
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"/>
 
 
                     <androidx.compose.ui.platform.ComposeView
@@ -130,8 +132,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            card_view:cardElevation="2dp">
+            android:layout_marginBottom="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -143,7 +144,9 @@
                     android:id="@+id/digiclub_score"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:textSize="17sp"
+                    android:textColor="@color/black"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -151,7 +154,9 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_margin="14dp"
+            card_view:cardCornerRadius="10dp"
+
             card_view:cardElevation="2dp">
 
             <LinearLayout
@@ -166,6 +171,7 @@
                     android:layout_height="wrap_content"
                     android:text="مزایای عضویت پلاس برای این سفارش"
                     android:textColor="#80226e"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
 
 
@@ -181,8 +187,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
 
             <LinearLayout
                 android:id="@+id/technical_properties"

@@ -42,10 +42,13 @@ import com.google.accompanist.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
@@ -93,7 +96,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -117,6 +119,8 @@ import com.example.digikala.data.models.home.HomePageData
 import com.example.digikala.data.models.home.MainBanner
 import com.example.digikala.data.models.home.Product
 import com.example.digikala.data.models.home.Product2
+import com.example.digikala.data.models.product.AttributeInformationData
+import com.example.digikala.data.models.product.DetailSection
 import com.example.digikala.data.models.product.LatestComment
 import com.example.digikala.data.models.product.LatestQuestion
 import com.example.digikala.data.models.product.ProductPageData
@@ -153,8 +157,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val navController = rememberNavController()
             CompositionLocalProvider(
-                LocalProvider.LocalProductViewModel provides productViewModel
+                LocalProvider.LocalProductViewModel provides productViewModel,
+                LocalProvider.LocalNavController provides navController
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -173,7 +179,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
-    val navController = rememberNavController()
+    val navController = LocalProvider.LocalNavController.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -197,24 +203,41 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                         }
                     )
                 }
-                if (route == Const.PRODUCT_DETAILS) {
-                    TopAppBar(
-                        title = { Text("") },
-                        navigationIcon = {
-                            IconButton(onClick = {
-                                navController.popBackStack()
-                            }) {
-                                Icon(Icons.Default.Close, contentDescription = "close icon")
-                            }
-                        }
-                    )
-                } else {
 
-                    Column {
-                        Spacer(modifier = Modifier.height(40.dp))
-                        searchBox()
+                when (route) {
+                    Const.PRODUCT_DETAILS -> {
+                        TopAppBar(
+                            title = { Text("") },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    navController.popBackStack()
+                                }) {
+                                    Icon(Icons.Default.Close, contentDescription = "close icon")
+                                }
+                            }
+                        )
                     }
 
+                    Const.TECHNICAL_INFORMATION -> {
+                        TopAppBar(
+                            title = { Text(Const.TECHNICAL_INFORMATION) },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    navController.popBackStack()
+                                }) {
+                                    Icon(Icons.Default.ArrowForward, contentDescription = "Back Icon")
+                                }
+                            }
+                        )
+                    }
+
+                    else -> {
+                        Column {
+                            Spacer(modifier = Modifier.height(40.dp))
+                            searchBox()
+                        }
+                    }
+                }
 //                    CenterAlignedTopAppBar(
 //                        title = {
 //
@@ -236,7 +259,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
 //                        },
 //                        modifier = Modifier.background(Color.Red)
 //                    )
-                }
             }
         ) { innerPadding ->
             NavHost(
@@ -245,7 +267,8 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Const.HOME) { HomePage(navController, homeViewModel) }
-                composable(Const.PRODUCT_DETAILS) { ProductDetails(navController) }
+                composable(Const.PRODUCT_DETAILS) { ProductDetails() }
+                composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage(navController) }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage(navController) }
                 composable(Const.PROFILE) { ProfilePage(navController) }
@@ -269,38 +292,38 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 
     if (currentRoute(navController) == Const.PRODUCT_DETAILS) {
 
-        Surface(
-            modifier = Modifier
-                .background(Color.White),
-//            tonalElevation = 2.dp,
-//            shadowElevation = 2.dp
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("قیمت: ۴۱۹,۹۰۰ تومان", style = MaterialTheme.typography.bodyLarge)
-                    Text("٪۵۸ تخفیف", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = { /* افزودن به سبد خرید */ },
-                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
-                        backgroundColor = PrimaryColor,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "افزودن به سبد خرید",
-                        color = Color.White
-                    )
-                }
-            }
-        }
+//        Surface(
+//            modifier = Modifier
+//                .background(Color.White),
+////            tonalElevation = 2.dp,
+////            shadowElevation = 2.dp
+//        ) {
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(16.dp),
+//                verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Column {
+//                    Text("قیمت: ۴۱۹,۹۰۰ تومان", style = MaterialTheme.typography.bodyLarge)
+//                    Text("٪۵۸ تخفیف", color = Color.Red, fontWeight = FontWeight.Bold)
+//                }
+//                Button(
+//                    onClick = { /* افزودن به سبد خرید */ },
+//                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
+//                        backgroundColor = PrimaryColor,
+//                        contentColor = Color.White
+//                    ),
+//                    shape = RoundedCornerShape(8.dp)
+//                ) {
+//                    Text(
+//                        text = "افزودن به سبد خرید",
+//                        color = Color.White
+//                    )
+//                }
+//            }
+//        }
     } else {
         var itemSelected by remember { mutableStateOf(0) }
 
@@ -767,13 +790,7 @@ fun productSliderTrending(
                         shape = RoundedCornerShape(8.dp),
                         onClick = {
                             productViewModel.getProductData(products[i].id)
-                            navController.navigate(Const.PRODUCT_DETAILS) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            navController.navigate(Const.PRODUCT_DETAILS)
                         }
                     ) {
                         Row(
@@ -1862,9 +1879,8 @@ fun searchBox() {
     }
 }
 
-@OptIn(ExperimentalMaterialNavigationApi::class)
 @Composable
-fun ProductDetails(navController: NavController) {
+fun ProductDetails() {
     val productViewModel = LocalProvider.LocalProductViewModel.current
     val productData = productViewModel.productData.collectAsState()
     val data: ProductPageData
@@ -1881,7 +1897,6 @@ fun ProductDetails(navController: NavController) {
 
         is NetworkState.Success -> {
             data = (productData.value as NetworkState.Success<ProductPageData>).data
-            Log.i("MOX", "ProductDetails: " + data.result.product)
             ProductPageDesign(data)
         }
 
@@ -1900,52 +1915,80 @@ fun ProductPageDesign(data: ProductPageData) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
-        state = listState,
-        horizontalAlignment = Alignment.CenterHorizontally
-    )
-    {
-        item(key = "slider") {
-            ProductPageSlider(data)
-        }
-        item(key = "information") {
-            ProductInformation(data,
-                moveOnItemClick = {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(index = 3)
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp),
+            state = listState,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item(key = "slider") {
+                ProductPageSlider(data)
+            }
+            item(key = "information") {
+                ProductInformation(
+                    data,
+                    moveOnItemClick = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(index = 3)
+                        }
                     }
-                }
-            )
+                )
+            }
         }
+
+        BottomBar(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+            data
+        )
     }
 }
 
+@Composable
+fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(data.result.product.price.selling_price.toString(), style = MaterialTheme.typography.bodyLarge)
+                    Text("٪۵۸ تخفیف", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = { /* افزودن به سبد خرید */ },
+                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
+                        backgroundColor = PrimaryColor,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "افزودن به سبد خرید",
+                        color = Color.White
+                    )
+                }
+            }
+    }
+}
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun ProductPageSlider(sliderData: ProductPageData) {
-    val intervalMillis: Long = 8000
-    val images = listOf(
-        sliderData.result.product.images,
-//        sliderData.result.product.images.image_list
-    )
+    val images = mutableListOf(sliderData.result.product.images.main)
+    images.addAll(sliderData.result.product.images.image_list)
 
-    val pagerState = rememberPagerState(images.size)
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(key1 = pagerState.currentPage) {
-        if (images.isNotEmpty()) {
-            while (true) {
-                delay(intervalMillis)
-                val nextPage = (pagerState.currentPage + 1) % images.size
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(nextPage)
-                }
-            }
-        }
-    }
+    val pagerState = rememberPagerState(initialPage = 0)
 
     HorizontalPager(
         modifier = Modifier
@@ -1953,9 +1996,9 @@ fun ProductPageSlider(sliderData: ProductPageData) {
             .aspectRatio(16f / 9f),
         state = pagerState,
         count = images.size
-    ) {
+    ) { page ->
         Image(
-            painter = rememberAsyncImagePainter(images.get(it).main),
+            painter = rememberAsyncImagePainter(images[page]),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 20.dp, bottom = 8.dp, end = 20.dp, start = 20.dp),
@@ -1967,7 +2010,7 @@ fun ProductPageSlider(sliderData: ProductPageData) {
         pagerState = pagerState,
         activeColor = Color.Red,
         inactiveColor = Color.LightGray,
-        indicatorWidth = 12.dp,
+        indicatorWidth = 6.dp,
         indicatorHeight = 6.dp,
         indicatorShape = RoundedCornerShape(3.dp)
     )
@@ -2070,7 +2113,6 @@ fun ProductActionsRow(
 ) {
     val itemList = mutableListOf<@Composable () -> Unit>()
 
-    // آیتم امتیاز
     itemList.add {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
@@ -2086,14 +2128,12 @@ fun ProductActionsRow(
         }
     }
 
-    // آیتم دیدگاه‌ها
     commentCount?.takeIf { it > 0 }?.let {
         itemList.add {
             UserActionButton("${formatNumberToPersian(it.toDouble())} دیدگاه ها", onClick = onItemClick)
         }
     }
 
-    // آیتم پرسش و پاسخ
     questionCount?.takeIf { it > 0 }?.let {
         itemList.add {
             UserActionButton("${formatNumberToPersian(it.toDouble())} پرسش و پاسخ", onClick = onItemClick)
@@ -2262,8 +2302,10 @@ fun ProductSpecificationsButton(title: String, feature: String) {
 
 @Composable
 fun ProductInfoXmlView(sellerData: ProductPageData) {
+    val productViewModel = LocalProvider.LocalProductViewModel.current
     val data = sellerData.result.product.variants.get(0)
     var productInfoBinding: ProductInfoSectionBinding? = null
+    val navController = LocalProvider.LocalNavController.current
 
     AndroidView(
         factory = { context ->
@@ -2296,11 +2338,12 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = provider.title,
+                            Text(
+                                text = provider.title,
                                 fontSize = 13.sp,
                                 color = Color.Gray,
                                 fontWeight = FontWeight.Bold
-                                )
+                            )
                         }
                     }
                 }
@@ -2319,7 +2362,8 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
                                 modifier = Modifier.padding(vertical = 4.dp)
                             ) {
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(text = provider.title,
+                                Text(
+                                    text = provider.title,
                                     fontSize = 13.sp,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
@@ -2331,18 +2375,33 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
             }
 
             technicalBox.setContent {
-                Row(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "مشخصات فنی",
-                        fontSize = 15.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(
-                        Icons.Default.KeyboardArrowLeft,
-                        contentDescription = null,
-                        modifier = Modifier
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(
+                            interactionSource = null,
+                            indication = null
+                        ) {
+                            productViewModel.getAttributeData(sellerData.result.product.id)
+                            navController.navigate(Const.TECHNICAL_INFORMATION)
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "مشخصات فنی",
+                            fontSize = 15.sp,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = null
+                        )
+                    }
                 }
             }
         }
@@ -2535,7 +2594,7 @@ fun QuestionItem(question: LatestQuestion) {
                     Text(
                         text = question.text,
                         textAlign = TextAlign.Right,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                         maxLines = 3,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
@@ -2549,7 +2608,7 @@ fun QuestionItem(question: LatestQuestion) {
                         text = "پاسخ: ${question.last_answer?.text}",
                         textAlign = TextAlign.Right,
                         color = Color.Gray,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                         maxLines = 2,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2570,6 +2629,88 @@ fun QuestionItem(question: LatestQuestion) {
         }
     }
 }
+
+@Composable
+fun AttributeInformationPage() {
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val attributeData = productViewModel.attributeInformation.collectAsState()
+
+    when (attributeData.value) {
+        is NetworkState.Loading -> {
+
+        }
+        is NetworkState.Success -> {
+            val data = (attributeData.value as NetworkState.Success<AttributeInformationData>).data
+            LazyColumn {
+                items(data.result.size) {
+                   AttributesDesign(data.result.get(it))
+                }
+            }
+        }
+        is NetworkState.UnSuccess -> {
+
+        }
+        is NetworkState.Failure -> {
+
+        }
+    }
+}
+
+@Composable
+fun AttributesDesign(attributes: DetailSection) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+    ) {
+        Text(
+            text = attributes.title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            textAlign = TextAlign.Right
+        )
+
+        attributes.attributes?.forEach { item ->
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = item.title,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        modifier = Modifier
+                            .weight(1f),
+                        textAlign = TextAlign.Right
+                    )
+
+                    Text(
+                        text = item.values.toString(),
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .weight(1f),
+                        textAlign = TextAlign.Right
+                    )
+                }
+                Divider(
+                    color = Color.LightGray,
+                    thickness = 0.5.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
 
 @Preview
 @Composable
@@ -2595,7 +2736,7 @@ fun ProfilePage(navController: NavController) {
 @Composable
 fun Preview() {
 
-    ProductDetails(navController = rememberNavController())
+    ProductDetails()
 //    ProductDetailsScreen()
 //    ProductDetailsScreen()
 //    DigikalaTheme {

@@ -1,5 +1,6 @@
 package com.example.digikala.network
 
+import com.example.digikala.data.models.product.AttributeInformationData
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
@@ -14,6 +15,11 @@ interface StoreApiService {
 
     @GET("product/")
     suspend fun getProductContent(
+        @Query("id") id: Long
+    ): Response<ResponseBody>
+
+    @GET("product/specifications")
+    suspend fun getAttributeData(
         @Query("id") id: Long
     ): Response<ResponseBody>
 }

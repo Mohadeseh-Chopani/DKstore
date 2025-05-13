@@ -11,7 +11,7 @@ data class Result(
 )
 
 data class Product(
-    val id: Double,
+    val id: Long,
     val category_id: Double,
     val category_title: String,
     val title_fa: String,
