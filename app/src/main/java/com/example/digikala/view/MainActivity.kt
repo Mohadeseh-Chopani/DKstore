@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterialApi::class)
+
 package com.example.digikala.view
 
 import android.annotation.SuppressLint
@@ -437,7 +439,6 @@ fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
                     productSliderTrending(
                         data.result.trending.title,
                         data.result.trending.products,
-                        navController
                     )
 
                     Spacer(
@@ -714,10 +715,10 @@ fun ImageSlider(
 @Composable
 fun productSliderTrending(
     titleHeader: String,
-    products: List<Product>,
-    navController: NavController
+    products: List<Product>
 ) {
     val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Log.i("MOX", "PopularProducts: " + products.size)
     Column(
@@ -813,6 +814,8 @@ fun productSliderTrending(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) {
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Column(
         modifier = Modifier
@@ -863,6 +866,10 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
                             .padding(4.dp)
                             .border(0.2.dp, Color.Gray, RoundedCornerShape(8.dp)),
                         shape = RoundedCornerShape(8.dp),
+                        onClick = {
+                            productViewModel.getProductData(products[i].id)
+                            navController.navigate(Const.PRODUCT_DETAILS)
+                        }
                     ) {
                         Row(
                             modifier = Modifier
@@ -956,8 +963,12 @@ fun ProductItemInHomePage(
     price: Long?,
     discount: Long?,
     oldPrice: Long?,
+    id: Long?,
     modifier: Modifier = Modifier
 ) {
+
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Card(
         modifier = modifier
@@ -965,7 +976,11 @@ fun ProductItemInHomePage(
             .height(height)
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
-        elevation = 4.dp
+        elevation = 4.dp,
+        onClick = {
+            id?.let { productViewModel.getProductData(it) }
+            navController.navigate(Const.PRODUCT_DETAILS)
+        }
     ) {
         Column(
             modifier = Modifier
@@ -1118,7 +1133,8 @@ fun RowProductList1(result: Home1) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price?.selling_price,
                     discount = null,
-                    oldPrice = result.products.get(product).price?.rrp_price
+                    oldPrice = result.products.get(product).price?.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1175,7 +1191,8 @@ fun RowProductList2(result: Home2) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
                     discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1233,7 +1250,8 @@ fun RowProductList3(result: Home3) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
                     discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1290,7 +1308,8 @@ fun RowProductList4(result: Home4) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
                     discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1347,7 +1366,8 @@ fun RowProductList5(result: Home5) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price?.selling_price,
                     discount = result.products.get(product).price?.discount_percent,
-                    oldPrice = result.products.get(product).price?.rrp_price
+                    oldPrice = result.products.get(product).price?.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1404,7 +1424,8 @@ fun RowProductList6(result: Home6) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
                     discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1461,7 +1482,8 @@ fun RowProductList7(result: Home7) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price?.selling_price,
                     discount = result.products.get(product).price?.discount_percent,
-                    oldPrice = result.products.get(product).price?.rrp_price
+                    oldPrice = result.products.get(product).price?.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1518,7 +1540,8 @@ fun RowProductList8(result: Home8) {
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price!!,
                     discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
@@ -1677,6 +1700,18 @@ fun ProductPageDesign(data: ProductPageData) {
 
 @Composable
 fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
+
+    var currentIndex by remember { mutableStateOf(0) }
+
+    data.result.product.product_badges?.let {
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(3000L)
+                currentIndex = (currentIndex + 1) % (data.result.product.product_badges.size)
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -1693,18 +1728,19 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
 
             Column {
 
-                val payloadData = data.result.product.product_badges[0].payload
-
-                val colorInt = ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData.text_color))
-                Text(
-                    text = payloadData.text,
-                    fontFamily = MyCustomFont,
-                    fontWeight = FontWeight.Normal,
-                    color = colorInt,
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                )
+                val payloadData = data.result.product.product_badges?.get(currentIndex)?.payload
+                payloadData?.let {
+                    val colorInt = ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
+                    Text(
+                        text = payloadData?.text.toString(),
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        color = colorInt,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                    )
+                }
 
                 Button(
                     onClick = { /* TODO: Handle Add to Cart */ },

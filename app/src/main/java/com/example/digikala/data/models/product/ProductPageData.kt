@@ -26,7 +26,7 @@ data class Product(
     val warehouse_stock: Double,
     val product_type: String,
     val properties: Properties,
-    val product_badges: List<ProductBadge>,
+    val product_badges: List<ProductBadge>?,
     val price: Price,
     val digiplus: Digiplus,
     val product_badge: ProductBadge2,
