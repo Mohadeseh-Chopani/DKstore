@@ -1,11 +1,14 @@
 package com.example.digikala.di
 
 import android.app.Application
+import com.example.digikala.data.dataSource.CategoriesDataSourceImp
 import com.example.digikala.data.dataSource.HomePageDataSourceImp
 import com.example.digikala.data.dataSource.ProductDataSourceImp
+import com.example.digikala.data.repository.CategoriesRepositoryImp
 import com.example.digikala.data.repository.HomeRepositoryImp
 import com.example.digikala.data.repository.ProductRepositoryImp
 import com.example.digikala.network.StoreApiProvider
+import com.example.digikala.view.CategoriesViewModel
 import com.example.digikala.view.HomeViewModel
 import com.example.digikala.view.ProductViewModel
 import org.koin.android.ext.koin.androidContext
@@ -34,6 +37,11 @@ class MyApp: Application() {
             factoryOf(::ProductDataSourceImp)
             factoryOf(::ProductRepositoryImp)
             viewModelOf(::ProductViewModel)
+
+            //categories page
+            factoryOf(::CategoriesDataSourceImp)
+            factoryOf(::CategoriesRepositoryImp)
+            viewModelOf(::CategoriesViewModel)
         }
 
         startKoin {

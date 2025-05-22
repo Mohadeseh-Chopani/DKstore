@@ -1,6 +1,8 @@
 package com.example.digikala.network
 
+import com.example.digikala.data.models.category.CategoriesData
 import com.example.digikala.data.models.product.AttributeInformationData
+import kotlinx.coroutines.flow.Flow
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
@@ -22,4 +24,7 @@ interface StoreApiService {
     suspend fun getAttributeData(
         @Query("id") id: Long
     ): Response<ResponseBody>
+
+    @GET("categories/")
+    suspend fun getCategoriesData(): Response<ResponseBody>
 }

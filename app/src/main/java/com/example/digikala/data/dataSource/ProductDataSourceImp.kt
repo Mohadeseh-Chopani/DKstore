@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.digikala.data.models.product.AttributeInformationData
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.network.StoreApiService
+import com.example.digikala.utils.ProcessJson
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -21,7 +22,7 @@ class ProductDataSourceImp(val apiService: StoreApiService): ProductDataSource {
         }
 
         val jsonString = response.body()?.string() ?: throw Exception("Empty response body")
-        val transformedJsonString = transformJson(jsonString)
+        val transformedJsonString = ProcessJson.transformJson(jsonString)
         val productData = Gson().fromJson(transformedJsonString, ProductPageData::class.java)
 
         emit(productData)
@@ -35,44 +36,9 @@ class ProductDataSourceImp(val apiService: StoreApiService): ProductDataSource {
             throw Exception("Server returned error: ${response.code()}")
         }
         val jsonString = response.body()?.string() ?: throw Exception("Empty response body")
-        val transformedJsonString = transformJson(jsonString)
+        val transformedJsonString = ProcessJson.transformJson(jsonString)
         val productData = Gson().fromJson(transformedJsonString, AttributeInformationData::class.java)
 
         emit(productData)
     }.flowOn(Dispatchers.IO)
-
-
-    private fun transformJson(jsonString: String): String {
-        return try {
-            val jsonElement = JsonParser.parseString(jsonString)
-            if (jsonElement.isJsonObject) {
-                val jsonObject = jsonElement.asJsonObject
-                processJsonObject(jsonObject)
-            }
-            jsonElement.toString()
-        } catch (e: Exception) {
-            Log.e("ProductPageDataSourceImp", "Error parsing JSON: ${e.message}")
-            jsonString
-        }
-    }
-
-    private fun processJsonObject(jsonObject: JsonObject) {
-        for ((key, value) in jsonObject.entrySet()) {
-            when {
-                value.isJsonArray && value.asJsonArray.size() == 0 -> {
-                    jsonObject.add(key, JsonObject())
-                }
-                value.isJsonObject -> {
-                    processJsonObject(value.asJsonObject)
-                }
-                value.isJsonArray -> {
-                    value.asJsonArray.forEach { element ->
-                        if (element.isJsonObject) {
-                            processJsonObject(element.asJsonObject)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

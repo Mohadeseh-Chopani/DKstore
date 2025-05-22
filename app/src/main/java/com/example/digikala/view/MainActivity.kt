@@ -112,6 +112,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.example.digikala.R
+import com.example.digikala.data.models.category.CategoriesData
 import com.example.digikala.data.models.home.Home1
 import com.example.digikala.data.models.home.Home2
 import com.example.digikala.data.models.home.Home3
@@ -153,6 +154,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.internal.parseCookie
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.dsl.koinApplication
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -161,6 +163,7 @@ class MainActivity : ComponentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModel()
     private val productViewModel: ProductViewModel by viewModel()
+    private val categoriesViewModel: CategoriesViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -278,7 +281,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 composable(Const.HOME) { HomePage(navController, homeViewModel) }
                 composable(Const.PRODUCT_DETAILS) { ProductDetails() }
                 composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
-                composable(Const.CATEGORIES) { CategoriesPage(navController) }
+                composable(Const.CATEGORIES) { CategoriesPage() }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage(navController) }
                 composable(Const.PROFILE) { ProfilePage(navController) }
             }
@@ -2784,7 +2787,29 @@ fun PreviewProductInfoScreen() {
 
 
 @Composable
-fun CategoriesPage(navController: NavController) {
+fun CategoriesPage() {
+    val categoriesViewModel = LocalProvider.LocalCategoriesViewModel.current
+    val categoriesData = categoriesViewModel.categoriesData.collectAsState()
+
+    when (categoriesData.value) {
+        is NetworkState.Loading -> {
+            CircularProgressIndicator()
+        }
+        is NetworkState.Success -> {
+            val data = (categoriesData.value as NetworkState.Success<CategoriesData>).data
+            CategoriesPageDesign(data)
+        }
+        is NetworkState.UnSuccess -> {
+
+        }
+        is NetworkState.Failure -> {
+
+        }
+    }
+}
+
+@Composable
+fun CategoriesPageDesign(categoriesData: CategoriesData) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Box(
             modifier = Modifier
