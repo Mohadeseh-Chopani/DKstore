@@ -84,13 +84,13 @@ data class Payload(
 )
 
 data class Price(
-    val selling_price: Double,
-    val rrp_price: Double,
-    val order_limit: Double,
+    val selling_price: Long,
+    val rrp_price: Long,
+    val order_limit: Int,
     val is_incredible: Boolean,
-    val discount_percent: Double,
+    val discount_percent: Int,
     val timer: String,
-    val sold_percentage: Double,
+    val sold_percentage: Int,
     val badge: Badge,
 )
 

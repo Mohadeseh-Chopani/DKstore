@@ -3,7 +3,7 @@ package com.example.digikala.ui.theme
 import androidx.compose.ui.graphics.Color
 
 //val PrimaryColor = Color(0xFFED1944)
-val PrimaryColor = Color(0xFF4781B4)
+val PrimaryColor = Color(0xFFE6113D)
 val MenuItemColor = Color(0x14ED1944)
 //val MenuItemColor = Color(0x14ED1944)
 val SecondColor = Color(0xFFFFD9B9)

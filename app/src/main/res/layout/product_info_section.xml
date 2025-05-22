@@ -31,8 +31,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/black"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:textSize="14sp"
+                    android:fontFamily="@font/iran_sans_mobile"/>
 
 
                 <LinearLayout
@@ -44,14 +44,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="عملکرد  "
-                        android:textSize="16sp"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/iran_sans_mobile"
                         android:textColor="#81858b" />
 
                     <TextView
                         android:id="@+id/customer_satisfaction"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="16sp"/>
+                        android:textSize="14sp"
+                        android:fontFamily="@font/iran_sans_mobile"/>
 
                 </LinearLayout>
 
@@ -73,8 +75,8 @@
                     android:id="@+id/spacial_service"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="17sp"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/iran_sans_mobile"
                     android:textColor="@color/black"
                     card_view:layout_constraintBottom_toBottomOf="parent"
                     card_view:layout_constraintEnd_toEndOf="parent"
@@ -87,7 +89,9 @@
                     android:id="@+id/product_return"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="17sp"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/iran_sans_mobile"
+                    android:visibility="gone"
                     card_view:layout_constraintBottom_toBottomOf="parent"
                     card_view:layout_constraintEnd_toEndOf="parent"
                     card_view:layout_constraintHorizontal_bias="0.0"
@@ -114,8 +118,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/iran_sans_mobile"
                     android:textColor="@color/black"/>
 
 
@@ -144,8 +148,8 @@
                     android:id="@+id/digiclub_score"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="17sp"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/iran_sans_mobile"
                     android:textColor="@color/black"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -171,7 +175,8 @@
                     android:layout_height="wrap_content"
                     android:text="مزایای عضویت پلاس برای این سفارش"
                     android:textColor="#80226e"
-                    android:textSize="17sp"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/iran_sans_mobile"
                     android:textStyle="bold" />
 
 
