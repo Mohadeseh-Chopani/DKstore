@@ -12,6 +12,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +55,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -80,6 +83,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -196,18 +200,18 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
             topBar = {
                 val route = currentRoute(navController)
 
-                if (route == Const.CATEGORIES) {
-                    TopAppBar(
-                        title = { Text("صفحه دسته بندی ها") },
-                        navigationIcon = {
-                            IconButton(onClick = {
-                                navController.popBackStack()
-                            }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Back Icon")
-                            }
-                        }
-                    )
-                }
+//                if (route == Const.CATEGORIES) {
+//                    TopAppBar(
+//                        title = { Text("صفحه دسته بندی ها") },
+//                        navigationIcon = {
+//                            IconButton(onClick = {
+//                                navController.popBackStack()
+//                            }) {
+//                                Icon(Icons.Default.ArrowBack, contentDescription = "Back Icon")
+//                            }
+//                        }
+//                    )
+//                }
 
                 when (route) {
                     Const.PRODUCT_DETAILS -> {
@@ -2778,8 +2782,99 @@ fun PreviewProductInfoScreen() {
 }
 
 
+
 @Composable
 fun CategoriesPage(navController: NavController) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp)
+
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.2f)
+                        .background(color = LightGrayColor),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+
+                ) {
+                    items(5) {
+                        Spacer(Modifier.fillMaxWidth().height(12.dp))
+                        Column {
+                            Image(painter = painterResource(R.drawable.category_icon), contentDescription = null)
+                            Text(text = "title")
+                        }
+                    }
+                }
+
+                LazyColumn(modifier = Modifier
+                    .padding(vertical = 12.dp, horizontal = 12.dp)){
+                    item {
+                        Text(text = "محصولات آرایشی",
+                            fontSize = 18.sp,
+                            color = LightBlue,
+                            fontWeight = FontWeight.Bold)
+                    }
+
+                    val items = listOf(
+                        "لوازم آرایشی" to listOf("آرایش ابرو", "آرایش چشم", "آرایش صورت", "آرایش لب", "ابزار آرایشی", "ناخن"),
+                        "مراقبت پوست" to listOf("کرم", "ماسک", "تونر"),
+                        "مراقبت مو" to listOf("شامپو", "نرم‌کننده", "روغن مو")
+                    )
+
+
+                    items(5) {
+                        ExpandableMenuItem("لوازم آرایشی", items )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ExpandableMenuItem(title: String, subItems: List<Pair<String, List<String>>>) {
+    var expanded by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "")
+
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { expanded = !expanded }
+        .padding(16.dp)) {
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = title, fontWeight = FontWeight.Bold)
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Expand",
+                modifier = Modifier.rotate(rotation)
+            )
+        }
+
+        AnimatedVisibility(visible = expanded) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                subItems.forEach { subItem ->
+
+                }
+            }
+        }
+    }
 }
 
 @Composable
