@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -121,6 +122,7 @@ import com.example.digikala.data.models.product.AttributeInformationData
 import com.example.digikala.data.models.product.DetailSection
 import com.example.digikala.data.models.product.LatestComment
 import com.example.digikala.data.models.product.LatestQuestion
+import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.databinding.ProductInfoSectionBinding
 import com.example.digikala.network.StoreApiProvider
@@ -143,6 +145,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.internal.parseCookie
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -1114,7 +1117,7 @@ fun RowProductList1(result: Home1) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price?.selling_price,
-                    discount = 16,
+                    discount = null,
                     oldPrice = result.products.get(product).price?.rrp_price
                 )
             }
@@ -1171,7 +1174,7 @@ fun RowProductList2(result: Home2) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
-                    discount = 16,
+                    discount = result.products.get(product).price.discount_percent,
                     oldPrice = result.products.get(product).price.rrp_price
                 )
             }
@@ -1229,7 +1232,7 @@ fun RowProductList3(result: Home3) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
-                    discount = 16,
+                    discount = result.products.get(product).price.discount_percent,
                     oldPrice = result.products.get(product).price.rrp_price
                 )
             }
@@ -1286,7 +1289,7 @@ fun RowProductList4(result: Home4) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
-                    discount = 16,
+                    discount = result.products.get(product).price.discount_percent,
                     oldPrice = result.products.get(product).price.rrp_price
                 )
             }
@@ -1343,7 +1346,7 @@ fun RowProductList5(result: Home5) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price?.selling_price,
-                    discount = 16,
+                    discount = result.products.get(product).price?.discount_percent,
                     oldPrice = result.products.get(product).price?.rrp_price
                 )
             }
@@ -1400,7 +1403,7 @@ fun RowProductList6(result: Home6) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price,
-                    discount = 16,
+                    discount = result.products.get(product).price.discount_percent,
                     oldPrice = result.products.get(product).price.rrp_price
                 )
             }
@@ -1456,9 +1459,9 @@ fun RowProductList7(result: Home7) {
                     height = itemHeight,
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
+                    price = result.products.get(product).price?.selling_price,
+                    discount = result.products.get(product).price?.discount_percent,
+                    oldPrice = result.products.get(product).price?.rrp_price
                 )
             }
 
@@ -1514,7 +1517,7 @@ fun RowProductList8(result: Home8) {
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
                     price = result.products.get(product).price.selling_price!!,
-                    discount = 16,
+                    discount = result.products.get(product).price.discount_percent,
                     oldPrice = result.products.get(product).price.rrp_price
                 )
             }
@@ -1902,6 +1905,7 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
             ProductInfoXmlView(productInformation)
 
             SimilarProducts(productInformation)
+
             ProductDetailsScreen(productInformation)
         }
     }
@@ -2234,7 +2238,175 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
 
 @Composable
 fun SimilarProducts(similarProductsData: ProductPageData) {
+    val data = similarProductsData.result.recommendation
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.70f
 
+    data?.related_products?.size?.let {
+        LazyRow {
+            items(it) { product ->
+                SimilarProductItemInProductPage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = data?.related_products?.get(product)?.images?.main,
+                    title = data?.related_products?.get(product)?.title_fa,
+                    price = data?.related_products?.get(product)?.price?.selling_price,
+                    discount = data?.related_products?.get(product)?.price?.discount_percent,
+                    oldPrice = data?.related_products?.get(product)?.price?.rrp_price,
+                    badge = data?.related_products?.get(product)?.product_badge
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SimilarProductItemInProductPage(
+    width: Dp, height: Dp,
+    imageRes: String?,
+    title: String?,
+    price: Long?,
+    discount: Int?,
+    oldPrice: Long?,
+    badge: ProductBadge2?,
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+        modifier = modifier
+            .width(width)
+            .height(height)
+            .padding(4.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(model = imageRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(width * 0.75f)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                modifier = Modifier
+                    .padding(start = 4.dp, end = 4.dp),
+                text = title.toString(),
+                textAlign = TextAlign.Start,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                maxLines = 2,
+                fontSize = 14.sp,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Start),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            badge?.icon
+                        ),
+                        contentDescription = null
+                    )
+
+                    Text(
+                        text = badge?.text.toString(),
+                        color = ColorUtils.fromInt(
+                            android.graphics.Color.parseColor(
+                                badge?.text_color
+                            )
+                        )
+                    )
+                }
+            }
+
+
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Start),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                if (oldPrice != price) {
+                    discount?.let {
+                        Box(
+                            modifier = Modifier
+                                .background(PrimaryColor, shape = RoundedCornerShape(6.dp))
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .align(Alignment.CenterVertically)
+                        ) {
+                            Text(
+                                text = ConvertNumbers.convertToPersianDigits(it.toString() + "%"),
+                                color = Color.White,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 10.sp,
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    oldPrice?.let {
+                        Text(
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp),
+                            text = ConvertNumbers.convertToPersianDigits(
+                                ConvertNumbers.convertRialToToman(it.toString())
+                            ),
+                            fontSize = 14.sp,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                textDecoration = TextDecoration.LineThrough,
+                                color = Color.Gray
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                }
+            }
+            Text(
+                modifier = Modifier
+                    .align(Alignment.Start),
+                text = "${
+                    ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman(price.toString())
+                    )
+                } تومان ",
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            )
+        }
+    }
 }
 
 @Composable

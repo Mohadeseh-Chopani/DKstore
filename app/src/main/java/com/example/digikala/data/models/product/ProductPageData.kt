@@ -8,6 +8,7 @@ data class ProductPageData(
 data class Result(
     val product: Product,
     val bigdata_tracker_data: BigdataTrackerData,
+    val recommendation: Recommendation
 )
 
 data class Product(
@@ -42,6 +43,30 @@ data class Product(
     val st_cmp_tacker: StCmpTacker,
 )
 
+data class Recommendation(
+    val related_products: List<RelatedProduct>
+)
+
+data class RelatedProduct(
+    val id: Long,
+    val category_id: Int,
+    val category_title: String,
+    val title_fa: String,
+    val title_en: String,
+    val rating: Rating?,
+    val brand: Brand,
+    val status: String,
+    val images: Images,
+    val default_variant_id: Long,
+    val second_default_variant_id: Long,
+    val parameters: Parameters,
+    val product_type: String,
+    val properties: Properties,
+    val product_badges: List<ProductBadge>?,
+    val price: Price,
+    val digiplus: Digiplus?,
+    val product_badge: ProductBadge2?
+)
 data class Rating(
     val rate: Double,
     val count: Double,

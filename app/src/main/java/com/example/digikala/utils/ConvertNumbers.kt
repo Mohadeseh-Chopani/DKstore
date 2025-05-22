@@ -19,8 +19,8 @@ class ConvertNumbers {
             return builder.toString()
         }
 
-        fun convertRialToToman(price: String): String {
-            val tomanPrice = price.substring(0, price.length -1).toInt()
+        fun convertRialToToman(price: String?): String {
+            val tomanPrice = price?.substring(0, price.length -1)?.toInt()
             return NumberFormat.getNumberInstance(Locale.US).format(tomanPrice)
         }
     }
