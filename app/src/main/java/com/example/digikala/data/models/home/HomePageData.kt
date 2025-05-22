@@ -1132,7 +1132,7 @@ data class Product9(
     val properties: Any?,
 //    @JsonProperty("product_badges")
     val product_badges: List<ProductBadge16>,
-    val price: Price9,
+    val price: Price9?,
     val digiplus: Digiplus8,
 //    @JsonProperty("product_badge")
     val product_badge: ProductBadge17?,

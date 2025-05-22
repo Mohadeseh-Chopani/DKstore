@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterialApi::class)
+
 package com.example.digikala.view
 
 import android.annotation.SuppressLint
@@ -5,12 +7,11 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,6 +37,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -43,12 +45,14 @@ import com.google.accompanist.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -61,7 +65,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -77,7 +80,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -85,7 +87,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -119,8 +120,11 @@ import com.example.digikala.data.models.home.HomePageData
 import com.example.digikala.data.models.home.MainBanner
 import com.example.digikala.data.models.home.Product
 import com.example.digikala.data.models.home.Product2
+import com.example.digikala.data.models.product.AttributeInformationData
+import com.example.digikala.data.models.product.DetailSection
 import com.example.digikala.data.models.product.LatestComment
 import com.example.digikala.data.models.product.LatestQuestion
+import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.databinding.ProductInfoSectionBinding
 import com.example.digikala.network.StoreApiProvider
@@ -134,13 +138,16 @@ import com.example.digikala.ui.theme.PrimaryColor
 import com.example.digikala.ui.theme.StarColor
 import com.example.digikala.utils.BottomNavigationItem
 import com.example.digikala.utils.Const
+import com.example.digikala.utils.ConvertNumbers
 import com.example.digikala.utils.LocalProvider
+import com.example.digikala.utils.MyCustomFont
 import com.example.digikala.utils.NetworkState
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.internal.parseCookie
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -155,8 +162,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val navController = rememberNavController()
             CompositionLocalProvider(
-                LocalProvider.LocalProductViewModel provides productViewModel
+                LocalProvider.LocalProductViewModel provides productViewModel,
+                LocalProvider.LocalNavController provides navController
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -175,7 +184,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
-    val navController = rememberNavController()
+    val navController = LocalProvider.LocalNavController.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -187,36 +196,53 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
             topBar = {
                 val route = currentRoute(navController)
 
-//                if (route == Const.CATEGORIES) {
-//                    TopAppBar(
-//                        title = { Text("صفحه دسته بندی ها") },
-//                        navigationIcon = {
-//                            IconButton(onClick = {
-//                                navController.popBackStack()
-//                            }) {
-//                                Icon(Icons.Default.ArrowBack, contentDescription = "Back Icon")
-//                            }
-//                        }
-//                    )
-//                }
-                if (route == Const.PRODUCT_DETAILS) {
+                if (route == Const.CATEGORIES) {
                     TopAppBar(
-                        title = { Text("") },
+                        title = { Text("صفحه دسته بندی ها") },
                         navigationIcon = {
                             IconButton(onClick = {
                                 navController.popBackStack()
                             }) {
-                                Icon(Icons.Default.Close, contentDescription = "close icon")
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back Icon")
                             }
                         }
                     )
-                } else {
+                }
 
-                    Column {
-                        Spacer(modifier = Modifier.height(40.dp))
-                        searchBox()
+                when (route) {
+                    Const.PRODUCT_DETAILS -> {
+                        TopAppBar(
+                            title = { Text("") },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    navController.popBackStack()
+                                }) {
+                                    Icon(Icons.Default.Close, contentDescription = "close icon")
+                                }
+                            }
+                        )
                     }
 
+                    Const.TECHNICAL_INFORMATION -> {
+                        TopAppBar(
+                            title = { Text(Const.TECHNICAL_INFORMATION) },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    navController.popBackStack()
+                                }) {
+                                    Icon(Icons.Default.ArrowForward, contentDescription = "Back Icon")
+                                }
+                            }
+                        )
+                    }
+
+                    else -> {
+                        Column {
+                            Spacer(modifier = Modifier.height(40.dp))
+                            searchBox()
+                        }
+                    }
+                }
 //                    CenterAlignedTopAppBar(
 //                        title = {
 //
@@ -238,7 +264,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
 //                        },
 //                        modifier = Modifier.background(Color.Red)
 //                    )
-                }
             }
         ) { innerPadding ->
             NavHost(
@@ -247,7 +272,8 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Const.HOME) { HomePage(navController, homeViewModel) }
-                composable(Const.PRODUCT_DETAILS) { ProductDetails(navController) }
+                composable(Const.PRODUCT_DETAILS) { ProductDetails() }
+                composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage(navController) }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage(navController) }
                 composable(Const.PROFILE) { ProfilePage(navController) }
@@ -271,38 +297,38 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 
     if (currentRoute(navController) == Const.PRODUCT_DETAILS) {
 
-        Surface(
-            modifier = Modifier
-                .background(Color.White),
-//            tonalElevation = 2.dp,
-//            shadowElevation = 2.dp
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("قیمت: ۴۱۹,۹۰۰ تومان", style = MaterialTheme.typography.bodyLarge)
-                    Text("٪۵۸ تخفیف", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = { /* افزودن به سبد خرید */ },
-                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
-                        backgroundColor = PrimaryColor,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "افزودن به سبد خرید",
-                        color = Color.White
-                    )
-                }
-            }
-        }
+//        Surface(
+//            modifier = Modifier
+//                .background(Color.White),
+////            tonalElevation = 2.dp,
+////            shadowElevation = 2.dp
+//        ) {
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(16.dp),
+//                verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Column {
+//                    Text("قیمت: ۴۱۹,۹۰۰ تومان", style = MaterialTheme.typography.bodyLarge)
+//                    Text("٪۵۸ تخفیف", color = Color.Red, fontWeight = FontWeight.Bold)
+//                }
+//                Button(
+//                    onClick = { /* افزودن به سبد خرید */ },
+//                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
+//                        backgroundColor = PrimaryColor,
+//                        contentColor = Color.White
+//                    ),
+//                    shape = RoundedCornerShape(8.dp)
+//                ) {
+//                    Text(
+//                        text = "افزودن به سبد خرید",
+//                        color = Color.White
+//                    )
+//                }
+//            }
+//        }
     } else {
         var itemSelected by remember { mutableStateOf(0) }
 
@@ -413,7 +439,6 @@ fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
                     productSliderTrending(
                         data.result.trending.title,
                         data.result.trending.products,
-                        navController
                     )
 
                     Spacer(
@@ -524,34 +549,11 @@ fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
 
                     RowProductList4(data.result.home_4)
 
-//                Spacer(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(24.dp)
-//                )
-
-//                ImageSlider(
-//
-//                    images = listOf(
-//                        MainBanner(
-//                            "https://dkstatics-public.digikala.com/digikala-adservice-banners/832f867ccd35f749becea69a10edf5f32d0fe144_1742021801.jpg?x-oss-process=image/quality,q_95/format,webp"
-//                        )
-//                    ),
-//                    5000, true
-//                )
-//                Spacer(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(24.dp)
-//                )
-//
-//                RowProductList5(data.result.h)
-
-//                Spacer(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(24.dp)
-//                )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
 
                     Spacer(
                         modifier = Modifier
@@ -713,11 +715,10 @@ fun ImageSlider(
 @Composable
 fun productSliderTrending(
     titleHeader: String,
-    products: List<Product>,
-    navController: NavController
+    products: List<Product>
 ) {
-    val pagerState = rememberPagerState(4)
     val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Log.i("MOX", "PopularProducts: " + products.size)
     Column(
@@ -738,7 +739,9 @@ fun productSliderTrending(
             Text(
                 text = titleHeader,
                 style = MaterialTheme.typography.headlineMedium,
-                fontSize = 22.sp,
+                fontSize = 16.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
                 color = Color.Black,
                 maxLines = 1,
             )
@@ -769,13 +772,7 @@ fun productSliderTrending(
                         shape = RoundedCornerShape(8.dp),
                         onClick = {
                             productViewModel.getProductData(products[i].id)
-                            navController.navigate(Const.PRODUCT_DETAILS) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            navController.navigate(Const.PRODUCT_DETAILS)
                         }
                     ) {
                         Row(
@@ -797,9 +794,11 @@ fun productSliderTrending(
                             ) {
                                 Text(
                                     text = products[i].title_fa,
-                                    style = MaterialTheme.typography.bodyMedium,
                                     color = Color.Black,
                                     textAlign = TextAlign.Start,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = MyCustomFont,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -815,6 +814,8 @@ fun productSliderTrending(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) {
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Column(
         modifier = Modifier
@@ -834,7 +835,9 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
             Text(
                 text = titleHeader,
                 style = MaterialTheme.typography.headlineMedium,
-                fontSize = 22.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
                 color = Color.Black,
                 maxLines = 1,
             )
@@ -863,6 +866,10 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
                             .padding(4.dp)
                             .border(0.2.dp, Color.Gray, RoundedCornerShape(8.dp)),
                         shape = RoundedCornerShape(8.dp),
+                        onClick = {
+                            productViewModel.getProductData(products[i].id)
+                            navController.navigate(Const.PRODUCT_DETAILS)
+                        }
                     ) {
                         Row(
                             modifier = Modifier
@@ -883,9 +890,11 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
                             ) {
                                 Text(
                                     text = products[i].title_fa,
-                                    style = MaterialTheme.typography.bodyMedium,
                                     color = Color.Black,
                                     textAlign = TextAlign.Start,
+                                    fontFamily = MyCustomFont,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Normal,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
@@ -947,29 +956,19 @@ fun RandomProducts(resultItem: List<String>) {
 }
 
 @Composable
-fun ProductItem(
+fun ProductItemInHomePage(
     width: Dp, height: Dp,
     imageRes: String,
     title: String,
     price: Long?,
     discount: Long?,
     oldPrice: Long?,
+    id: Long?,
     modifier: Modifier = Modifier
 ) {
 
-
-    fun convertToPersianDigits(number: String): String {
-        val persianDigits = arrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
-        val builder = StringBuilder()
-        number.forEach { char ->
-            if (char.isDigit()) {
-                builder.append(persianDigits[char.toString().toInt()])
-            } else {
-                builder.append(char)
-            }
-        }
-        return builder.toString()
-    }
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Card(
         modifier = modifier
@@ -977,7 +976,11 @@ fun ProductItem(
             .height(height)
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
-        elevation = 4.dp
+        elevation = 4.dp,
+        onClick = {
+            id?.let { productViewModel.getProductData(it) }
+            navController.navigate(Const.PRODUCT_DETAILS)
+        }
     ) {
         Column(
             modifier = Modifier
@@ -993,15 +996,17 @@ fun ProductItem(
                     .size(width * 0.75f)  // مقیاس تصویر بر اساس عرض آیتم
                     .clip(RoundedCornerShape(8.dp))
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 modifier = Modifier
                     .padding(start = 4.dp, end = 4.dp),
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Start,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
                 maxLines = 2,
+                fontSize = 14.sp,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -1024,13 +1029,18 @@ fun ProductItem(
                         discount?.let {
                             Box(
                                 modifier = Modifier
-                                    .background(Color.Red, shape = RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    .background(PrimaryColor, shape = RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                                    .align(Alignment.CenterVertically)
                             ) {
                                 Text(
-                                    text = convertToPersianDigits(it.toString() + "%"),
+                                    text = ConvertNumbers.convertToPersianDigits(it.toString() + "%"),
                                     color = Color.White,
-                                    fontSize = 16.sp
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
                                 )
                             }
                         }
@@ -1039,9 +1049,12 @@ fun ProductItem(
                             Text(
                                 modifier = Modifier
                                     .padding(horizontal = 6.dp),
-                                text = convertToPersianDigits(it.toString()),
-                                fontSize = 18.sp,
-                                fontFamily = FontFamily.SansSerif,
+                                text = ConvertNumbers.convertToPersianDigits(
+                                    ConvertNumbers.convertRialToToman(it.toString())
+                                ),
+                                fontSize = 14.sp,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     textDecoration = TextDecoration.LineThrough,
                                     color = Color.Gray
@@ -1054,9 +1067,14 @@ fun ProductItem(
                 Text(
                     modifier = Modifier
                         .align(Alignment.Start),
-                    text = convertToPersianDigits(price.toString()),
-                    fontSize = 20.sp,
-                    fontFamily = FontFamily.SansSerif,
+                    text = "${
+                        ConvertNumbers.convertToPersianDigits(
+                            ConvertNumbers.convertRialToToman(price.toString())
+                        )
+                    } تومان ",
+                    fontSize = 14.sp,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -1087,13 +1105,306 @@ fun RowProductList1(result: Home1) {
         ) {
             Text(
                 text = result.title,
-                style = MaterialTheme.typography.titleLarge,
+                fontFamily = MyCustomFont,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Medium
             )
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                color = PrimaryColor,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price?.selling_price,
+                    discount = null,
+                    oldPrice = result.products.get(product).price?.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowProductList2(result: Home2) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontFamily = MyCustomFont,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "مشاهده همه",
+                fontSize = 14.sp,
+                color = PrimaryColor,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price.selling_price,
+                    discount = result.products.get(product).price.discount_percent,
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowProductList3(result: Home3) {
+    var counter = remember { mutableStateOf(1) }
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontFamily = MyCustomFont,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "مشاهده همه",
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                color = PrimaryColor,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price.selling_price,
+                    discount = result.products.get(product).price.discount_percent,
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowProductList4(result: Home4) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontWeight = FontWeight.Medium,
+                fontFamily = MyCustomFont,
+                fontSize = 16.sp,
+            )
+            Text(
+                text = "مشاهده همه",
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                color = PrimaryColor,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price.selling_price,
+                    discount = result.products.get(product).price.discount_percent,
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowProductList5(result: Home5) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontSize = 16.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "مشاهده همه",
+                fontSize = 14.sp,
+                color = PrimaryColor,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price?.selling_price,
+                    discount = result.products.get(product).price?.discount_percent,
+                    oldPrice = result.products.get(product).price?.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowProductList6(result: Home6) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+            )
+            Text(
+                text = "مشاهده همه",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
                 fontSize = 14.sp,
                 color = PrimaryColor,
                 modifier = Modifier.clickable { /* Handle click */ }
@@ -1106,27 +1417,143 @@ fun RowProductList1(result: Home1) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(result.products.size) { product ->
-                Log.d("MOX", "RowProductList1: " + result.products.get(product))
-                ProductItem(
+                ProductItemInHomePage(
                     width = itemWidth,
                     height = itemHeight,
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price?.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price?.rrp_price
+                    price = result.products.get(product).price.selling_price,
+                    discount = result.products.get(product).price.discount_percent,
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
                 )
             }
 
             item {
-                showAllItem(itemWidth, itemHeight)
+                ShowMoreSection(itemWidth, itemHeight)
             }
         }
     }
 }
 
 @Composable
-fun showAllItem(itemWidth: Dp, itemHeight: Dp) {
+fun RowProductList7(result: Home7) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+            )
+            Text(
+                text = "مشاهده همه",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                color = PrimaryColor,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price?.selling_price,
+                    discount = result.products.get(product).price?.discount_percent,
+                    oldPrice = result.products.get(product).price?.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowProductList8(result: Home8) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.68f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = result.title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+            )
+            Text(
+                text = "مشاهده همه",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                color = PrimaryColor,
+                modifier = Modifier.clickable { /* Handle click */ }
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(result.products.size) { product ->
+                ProductItemInHomePage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = result.products.get(product).images.main,
+                    title = result.products.get(product).title_fa,
+                    price = result.products.get(product).price.selling_price!!,
+                    discount = result.products.get(product).price.discount_percent,
+                    oldPrice = result.products.get(product).price.rrp_price,
+                    id = result.products.get(product).id
+                )
+            }
+
+            item {
+                ShowMoreSection(itemWidth, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowMoreSection(itemWidth: Dp, itemHeight: Dp) {
     Card(
         modifier = Modifier
             .width(itemWidth)
@@ -1155,675 +1582,13 @@ fun showAllItem(itemWidth: Dp, itemHeight: Dp) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "مشاهده همه",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                     color = Color.Black
                 )
             }
         }
-    }
-}
-
-@Composable
-fun RowProductList2(result: Home2) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-    }
-}
-
-@Composable
-fun RowProductList3(result: Home3) {
-    var counter = remember { mutableStateOf(1) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-    }
-}
-
-@Composable
-fun RowProductList4(result: Home4) {
-    var counter = remember { mutableStateOf(1) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-    }
-}
-
-@Composable
-fun RowProductList5(result: Home5) {
-    var counter = remember { mutableStateOf(1) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price?.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price?.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-    }
-}
-
-@Composable
-fun RowProductList6(result: Home6) {
-    var counter = remember { mutableStateOf(1) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-    }
-}
-
-@Composable
-fun RowProductList7(result: Home7) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-    }
-}
-
-@Composable
-fun RowProductList8(result: Home8) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = result.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "مشاهده همه",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier.clickable { /* Handle click */ }
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.products.size) { product ->
-                ProductItem(
-                    width = itemWidth,
-                    height = itemHeight,
-                    imageRes = result.products.get(product).images.main,
-                    title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price!!,
-                    discount = 16,
-                    oldPrice = result.products.get(product).price.rrp_price
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = Color.White,
-                    elevation = 0.dp,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, color = Color.Gray, shape = CircleShape)
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "مشاهده همه",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-
     }
 }
 
@@ -1858,15 +1623,16 @@ fun searchBox() {
                     .padding(8.dp),
                 textAlign = TextAlign.Right,
                 text = "جستجو کالا",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
                 style = TextStyle(fontSize = 14.sp, color = Color.White)
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterialNavigationApi::class)
 @Composable
-fun ProductDetails(navController: NavController) {
+fun ProductDetails() {
     val productViewModel = LocalProvider.LocalProductViewModel.current
     val productData = productViewModel.productData.collectAsState()
     val data: ProductPageData
@@ -1883,7 +1649,6 @@ fun ProductDetails(navController: NavController) {
 
         is NetworkState.Success -> {
             data = (productData.value as NetworkState.Success<ProductPageData>).data
-            Log.i("MOX", "ProductDetails: " + data.result.product)
             ProductPageDesign(data)
         }
 
@@ -1902,52 +1667,165 @@ fun ProductPageDesign(data: ProductPageData) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
-        state = listState,
-        horizontalAlignment = Alignment.CenterHorizontally
-    )
-    {
-        item(key = "slider") {
-            ProductPageSlider(data)
-        }
-        item(key = "information") {
-            ProductInformation(data,
-                moveOnItemClick = {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(index = 3)
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp),
+            state = listState,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item(key = "slider") {
+                ProductPageSlider(data)
+            }
+            item(key = "information") {
+                ProductInformation(
+                    data,
+                    moveOnItemClick = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(index = 3)
+                        }
                     }
-                }
-            )
+                )
+            }
         }
+
+        BottomBar(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+            data
+        )
     }
 }
 
-
-@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProductPageSlider(sliderData: ProductPageData) {
-    val intervalMillis: Long = 8000
-    val images = listOf(
-        sliderData.result.product.images,
-//        sliderData.result.product.images.image_list
-    )
+fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
 
-    val pagerState = rememberPagerState(images.size)
-    val coroutineScope = rememberCoroutineScope()
+    var currentIndex by remember { mutableStateOf(0) }
 
-    LaunchedEffect(key1 = pagerState.currentPage) {
-        if (images.isNotEmpty()) {
+    data.result.product.product_badges?.let {
+        LaunchedEffect(Unit) {
             while (true) {
-                delay(intervalMillis)
-                val nextPage = (pagerState.currentPage + 1) % images.size
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(nextPage)
+                delay(3000L)
+                currentIndex = (currentIndex + 1) % (data.result.product.product_badges.size)
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Column {
+
+                val payloadData = data.result.product.product_badges?.get(currentIndex)?.payload
+                payloadData?.let {
+                    val colorInt = ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
+                    Text(
+                        text = payloadData?.text.toString(),
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        color = colorInt,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                    )
+                }
+
+                Button(
+                    onClick = { /* TODO: Handle Add to Cart */ },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.height(45.dp)
+                ) {
+                    Text(
+                        text = "افزودن به سبد خرید",
+                        color = Color.White,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Column {
+                if (data.result.product.price.rrp_price != data.result.product.price.selling_price) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = ConvertNumbers.convertToPersianDigits("${data.result.product.price.discount_percent}٪"),
+                            color = Color.White,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = MyCustomFont,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = ConvertNumbers.convertToPersianDigits(
+                                ConvertNumbers.convertRialToToman(data.result.product.price.rrp_price.toString())
+                            ),
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = MyCustomFont,
+                            color = Color.Gray,
+                            textDecoration = TextDecoration.LineThrough,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${
+                            ConvertNumbers.convertToPersianDigits(
+                                ConvertNumbers.convertRialToToman(data.result.product.price.selling_price.toString())
+                            )
+                        } تومان ",
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = MyCustomFont,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${
+                            ConvertNumbers.convertToPersianDigits(
+                                ConvertNumbers.convertRialToToman(data.result.product.price.selling_price.toString())
+                            )
+                        } تومان ",
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = MyCustomFont,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
                 }
             }
         }
     }
+}
+
+object ColorUtils {
+    fun fromInt(colorInt: Int): Color {
+        return Color(colorInt)
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun ProductPageSlider(sliderData: ProductPageData) {
+    val images = mutableListOf(sliderData.result.product.images.main)
+    images.addAll(sliderData.result.product.images.image_list)
+
+    val pagerState = rememberPagerState(initialPage = 0)
 
     HorizontalPager(
         modifier = Modifier
@@ -1955,9 +1833,9 @@ fun ProductPageSlider(sliderData: ProductPageData) {
             .aspectRatio(16f / 9f),
         state = pagerState,
         count = images.size
-    ) {
+    ) { page ->
         Image(
-            painter = rememberAsyncImagePainter(images.get(it).main),
+            painter = rememberAsyncImagePainter(images[page]),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 20.dp, bottom = 8.dp, end = 20.dp, start = 20.dp),
@@ -1969,7 +1847,7 @@ fun ProductPageSlider(sliderData: ProductPageData) {
         pagerState = pagerState,
         activeColor = Color.Red,
         inactiveColor = Color.LightGray,
-        indicatorWidth = 12.dp,
+        indicatorWidth = 6.dp,
         indicatorHeight = 6.dp,
         indicatorShape = RoundedCornerShape(3.dp)
     )
@@ -1994,6 +1872,8 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
                 Text(
                     text = productInformation.result.product.brand.title_fa,
                     color = LightBlue,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
                     fontSize = 16.sp
                 )
 
@@ -2009,6 +1889,8 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
                     text = productInformation.result.product.category_title,
                     color = LightBlue,
                     textAlign = TextAlign.Right,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
                     fontSize = 16.sp
                 )
             }
@@ -2016,7 +1898,9 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
             Text(
                 text = productInformation.result.product.title_fa,
                 color = Color.Black,
-                fontSize = 22.sp,
+                fontSize = 20.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .padding(horizontal = 18.dp)
             )
@@ -2056,6 +1940,8 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
 
             ProductInfoXmlView(productInformation)
 
+            SimilarProducts(productInformation)
+
             ProductDetailsScreen(productInformation)
         }
     }
@@ -2072,30 +1958,31 @@ fun ProductActionsRow(
 ) {
     val itemList = mutableListOf<@Composable () -> Unit>()
 
-    // آیتم امتیاز
     itemList.add {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
             Text(
-                text = DisplayNumber(stars),
+                text = ConvertNumbers.convertToPersianDigits(stars.toString()),
                 modifier = Modifier.padding(horizontal = 8.dp),
-                fontSize = 18.sp
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp
             )
             Text(
                 text = "(امتیاز ${formatNumberToPersian(ratingCount)} خریدار)",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
                 color = Color.Gray
             )
         }
     }
 
-    // آیتم دیدگاه‌ها
     commentCount?.takeIf { it > 0 }?.let {
         itemList.add {
             UserActionButton("${formatNumberToPersian(it.toDouble())} دیدگاه ها", onClick = onItemClick)
         }
     }
 
-    // آیتم پرسش و پاسخ
     questionCount?.takeIf { it > 0 }?.let {
         itemList.add {
             UserActionButton("${formatNumberToPersian(it.toDouble())} پرسش و پاسخ", onClick = onItemClick)
@@ -2154,6 +2041,9 @@ fun UserActionButton(title: String, onClick: () -> Unit) {
         ) {
             Text(
                 title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
             )
@@ -2182,11 +2072,15 @@ fun ProductColorList(colorData: ProductPageData) {
         Row {
             Text(
                 text = "رنگ:",
-                fontSize = 19.sp
+                fontSize = 16.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium
             )
             Text(
                 text = filteredVariants.get(0).color.title_fa,
-                fontSize = 19.sp
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal
             )
         }
 
@@ -2222,7 +2116,9 @@ fun ProductColorList(colorData: ProductPageData) {
                         Text(
                             modifier = Modifier
                                 .padding(end = 12.dp),
-                            text = lastColor.value
+                            text = lastColor.value,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -2246,17 +2142,20 @@ fun ProductSpecificationsButton(title: String, feature: String) {
         ) {
             Text(
                 title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .padding(bottom = 2.dp),
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 color = Color.DarkGray
             )
 
             Text(
                 feature,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 color = Color.Black,
-                fontFamily = FontFamily.Default
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
             )
         }
     }
@@ -2264,21 +2163,285 @@ fun ProductSpecificationsButton(title: String, feature: String) {
 
 @Composable
 fun ProductInfoXmlView(sellerData: ProductPageData) {
-
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val data = sellerData.result.product.variants.get(0)
     var productInfoBinding: ProductInfoSectionBinding? = null
+    val navController = LocalProvider.LocalNavController.current
 
     AndroidView(
         factory = { context ->
             productInfoBinding = ProductInfoSectionBinding.inflate(LayoutInflater.from(context))
             productInfoBinding!!.root
 
-//            productInfoBinding!!.sellerName.text = sellerData.result.product.variants.get(0).seller.title_fa
         },
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
     ) {
+        productInfoBinding?.apply {
+            sellerName.text = "فروشنده:  ${data.seller.title_fa}"
+            customerSatisfaction.text = "${data.seller.grade.label}"
+            val colorInt = android.graphics.Color.parseColor(data.seller.grade.color)
+            customerSatisfaction.setTextColor(colorInt)
+            spacialService.text = data.warranty.title_fa
+            availableInStock.text = data.shipment_methods.description
 
+            sendProduct.setContent {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    data.shipment_methods.providers.forEach { provider ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(provider.image),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = provider.title,
+                                fontSize = 13.sp,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.Gray,
+                            )
+                        }
+                    }
+                }
+            }
+
+            digiclubScore.text = "${data.digiclub.point} امتیاز در دیجی کلاب دریافت می کنید "
+
+            if (sellerData.result.product.digiplus.services == null) {
+                digiplusConst.visibility = View.GONE
+            } else {
+                digiplusServices.setContent {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        sellerData.result.product.digiplus.service_list.forEach { provider ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = provider.title,
+                                    fontSize = 13.sp,
+                                    color = Color.Gray,
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            technicalBox.setContent {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(
+                            interactionSource = null,
+                            indication = null
+                        ) {
+                            productViewModel.getAttributeData(sellerData.result.product.id)
+                            navController.navigate(Const.TECHNICAL_INFORMATION)
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "مشخصات فنی",
+                            fontSize = 15.sp,
+                            color = Color.Black,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SimilarProducts(similarProductsData: ProductPageData) {
+    val data = similarProductsData.result.recommendation
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.70f
+
+    data?.related_products?.size?.let {
+        LazyRow {
+            items(it) { product ->
+                SimilarProductItemInProductPage(
+                    width = itemWidth,
+                    height = itemHeight,
+                    imageRes = data?.related_products?.get(product)?.images?.main,
+                    title = data?.related_products?.get(product)?.title_fa,
+                    price = data?.related_products?.get(product)?.price?.selling_price,
+                    discount = data?.related_products?.get(product)?.price?.discount_percent,
+                    oldPrice = data?.related_products?.get(product)?.price?.rrp_price,
+                    badge = data?.related_products?.get(product)?.product_badge
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SimilarProductItemInProductPage(
+    width: Dp, height: Dp,
+    imageRes: String?,
+    title: String?,
+    price: Long?,
+    discount: Int?,
+    oldPrice: Long?,
+    badge: ProductBadge2?,
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+        modifier = modifier
+            .width(width)
+            .height(height)
+            .padding(4.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(model = imageRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(width * 0.75f)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                modifier = Modifier
+                    .padding(start = 4.dp, end = 4.dp),
+                text = title.toString(),
+                textAlign = TextAlign.Start,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                maxLines = 2,
+                fontSize = 14.sp,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Start),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            badge?.icon
+                        ),
+                        contentDescription = null
+                    )
+
+                    Text(
+                        text = badge?.text.toString(),
+                        color = ColorUtils.fromInt(
+                            android.graphics.Color.parseColor(
+                                badge?.text_color
+                            )
+                        )
+                    )
+                }
+            }
+
+
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Start),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                if (oldPrice != price) {
+                    discount?.let {
+                        Box(
+                            modifier = Modifier
+                                .background(PrimaryColor, shape = RoundedCornerShape(6.dp))
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .align(Alignment.CenterVertically)
+                        ) {
+                            Text(
+                                text = ConvertNumbers.convertToPersianDigits(it.toString() + "%"),
+                                color = Color.White,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 10.sp,
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    oldPrice?.let {
+                        Text(
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp),
+                            text = ConvertNumbers.convertToPersianDigits(
+                                ConvertNumbers.convertRialToToman(it.toString())
+                            ),
+                            fontSize = 14.sp,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                textDecoration = TextDecoration.LineThrough,
+                                color = Color.Gray
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                }
+            }
+            Text(
+                modifier = Modifier
+                    .align(Alignment.Start),
+                text = "${
+                    ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman(price.toString())
+                    )
+                } تومان ",
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            )
+        }
     }
 }
 
@@ -2315,7 +2478,7 @@ fun ProductDetailsScreen(questionAndCommentData: ProductPageData) {
                     comments?.latest_comments?.let {
                         if (comments?.count!! > comments?.latest_comments?.size!!) {
                             item {
-                                showAllItem(itemWidth, itemHeight)
+                                ShowMoreSection(itemWidth, itemHeight)
                             }
                         }
                     }
@@ -2339,7 +2502,7 @@ fun ProductDetailsScreen(questionAndCommentData: ProductPageData) {
                     questions?.latest_questions?.let {
                         if (questions?.count!! > questions?.latest_questions?.size!!) {
                             item {
-                                showAllItem(itemWidth, itemHeight)
+                                ShowMoreSection(itemWidth, itemHeight)
                             }
                         }
                     }
@@ -2353,8 +2516,9 @@ fun ProductDetailsScreen(questionAndCommentData: ProductPageData) {
 fun SectionTitle(title: String) {
     Text(
         text = title,
-        fontWeight = FontWeight.Bold,
-        fontSize = 20.sp,
+        fontFamily = MyCustomFont,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp,
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
             .fillMaxWidth(),
@@ -2372,82 +2536,78 @@ fun ReviewItem(review: LatestComment) {
             .border(0.2.dp, Color.LightGray, RoundedCornerShape(8.dp)),
         shape = RoundedCornerShape(8.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-
-                Text(
-                    text = review.user_name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.DarkGray,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .background(Green, shape = RoundedCornerShape(20.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "خریداران",
-                        color = DarkGreen,
-                        textAlign = TextAlign.Center
+                        text = review.user_name,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp)
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .background(Green, shape = RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "خریداران",
+                            color = DarkGreen,
+                            textAlign = TextAlign.Center,
+                            fontFamily = MyCustomFont,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
                 }
-            }
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            )
 
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                repeat(review.rate.toInt()) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    repeat(review.rate.toInt()) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = StarColor)
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = review.body,
+                    textAlign = TextAlign.Right,
+                    fontSize = 13.sp,
+                    maxLines = 3,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            )
-
-            Text(
-                text = review.body,
-                textAlign = TextAlign.Right,
-                fontSize = 14.sp,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            )
 
             Text(
                 text = review.created_at,
                 color = Color.Gray,
-                fontSize = 14.sp,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Right
+                fontSize = 12.sp,
+                textAlign = TextAlign.Right,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 8.dp)
             )
         }
     }
@@ -2466,52 +2626,152 @@ fun QuestionItem(question: LatestQuestion) {
             .border(0.2.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
         elevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row {
-                Image(
-                    painter = painterResource(R.drawable.question_icon),
-                    contentDescription = "icon_title"
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Row {
+                    Image(
+                        painter = painterResource(R.drawable.question_icon),
+                        contentDescription = "icon_title"
+                    )
+                    Text(
+                        text = question.text,
+                        textAlign = TextAlign.Right,
+                        fontSize = 14.sp,
+                        maxLines = 3,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
 
-                Text(
-                    text = question.text,
-                    textAlign = TextAlign.Right,
-                    fontSize = 16.sp,
-                    maxLines = 3,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
+                if (question.last_answer?.text != null) {
+                    Text(
+                        text = "پاسخ: ${question.last_answer?.text}",
+                        textAlign = TextAlign.Right,
+                        color = Color.Gray,
+                        fontSize = 13.sp,
+                        maxLines = 2,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
-            if (question.last_answer?.text != null) {
-                Text(
-                    text = "پاسخ: ${question.last_answer?.text} ",
-                    textAlign = TextAlign.Right,
-                    color = Color.Gray,
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
+
             Text(
                 text = question.created_at,
                 fontSize = 12.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Right,
-                modifier = Modifier.fillMaxWidth()
-                    .padding(top = 10.dp)
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 14.dp)
             )
         }
     }
 }
 
+@Composable
+fun AttributeInformationPage() {
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val attributeData = productViewModel.attributeInformation.collectAsState()
+
+    when (attributeData.value) {
+        is NetworkState.Loading -> {
+
+        }
+
+        is NetworkState.Success -> {
+            val data = (attributeData.value as NetworkState.Success<AttributeInformationData>).data
+            LazyColumn {
+                items(data.result.size) {
+                    AttributesDesign(data.result.get(it))
+                }
+            }
+        }
+
+        is NetworkState.UnSuccess -> {
+
+        }
+
+        is NetworkState.Failure -> {
+
+        }
+    }
+}
+
+@Composable
+fun AttributesDesign(attributes: DetailSection) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+    ) {
+        Text(
+            text = attributes.title,
+            fontSize = 18.sp,
+            color = Color.Black,
+            fontFamily = MyCustomFont,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            textAlign = TextAlign.Right
+        )
+
+        attributes.attributes?.forEach { item ->
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = item.title,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .weight(1f),
+                        textAlign = TextAlign.Right
+                    )
+
+                    Text(
+                        text = item.values.toString(),
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        modifier = Modifier
+                            .weight(1f),
+                        textAlign = TextAlign.Right
+                    )
+                }
+                Divider(
+                    color = Color.LightGray,
+                    thickness = 0.5.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+
+@Preview
 @Composable
 fun PreviewProductInfoScreen() {
 //    ProductInfoXmlView()
@@ -2520,96 +2780,6 @@ fun PreviewProductInfoScreen() {
 
 @Composable
 fun CategoriesPage(navController: NavController) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 8.dp)
-
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.2f)
-                        .background(color = LightGrayColor),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-
-                ) {
-                    items(5) {
-                        Spacer(Modifier.fillMaxWidth().height(12.dp))
-                        Column {
-                            Image(painter = painterResource(R.drawable.category_icon), contentDescription = null)
-                            Text(text = "title")
-                        }
-                    }
-                }
-
-                LazyColumn(modifier = Modifier
-                    .padding(vertical = 12.dp, horizontal = 12.dp)){
-                    item {
-                        Text(text = "محصولات آرایشی",
-                            fontSize = 18.sp,
-                            color = LightBlue,
-                            fontWeight = FontWeight.Bold)
-                    }
-
-                    val items = listOf(
-                        "لوازم آرایشی" to listOf("آرایش ابرو", "آرایش چشم", "آرایش صورت", "آرایش لب", "ابزار آرایشی", "ناخن"),
-                        "مراقبت پوست" to listOf("کرم", "ماسک", "تونر"),
-                        "مراقبت مو" to listOf("شامپو", "نرم‌کننده", "روغن مو")
-                    )
-
-
-                    items(5) {
-                        ExpandableMenuItem("لوازم آرایشی", items )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ExpandableMenuItem(title: String, subItems: List<Pair<String, List<String>>>) {
-    var expanded by remember { mutableStateOf(false) }
-    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "")
-
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .clickable { expanded = !expanded }
-        .padding(16.dp)) {
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = title, fontWeight = FontWeight.Bold)
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Expand",
-                modifier = Modifier.rotate(rotation)
-            )
-        }
-
-        AnimatedVisibility(visible = expanded) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                subItems.forEach { subItem ->
-
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -2625,6 +2795,20 @@ fun ProfilePage(navController: NavController) {
 @Composable
 fun Preview() {
 
-//    ProductDetails(navController = rememberNavController())
-    CategoriesPage(navController = rememberNavController())
+    ProductDetails()
+//    ProductDetailsScreen()
+//    ProductDetailsScreen()
+//    DigikalaTheme {
+//    BaseStructure(modifier = Modifier.background(Color.White), homeViewModel)
+//        HomePage(navController = rememberNavController())
+//    RowProductList()
+
+//        var images = listOf(
+//            R.drawable.ic_launcher_background,
+//            R.drawable.ic_launcher_background,
+//            R.drawable.ic_launcher_background,
+//            R.drawable.ic_launcher_background
+//        )
+//        RandomProducts(images)
+//    }
 }

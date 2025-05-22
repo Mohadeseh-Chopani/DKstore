@@ -6,4 +6,5 @@ object Const {
     const val PROFILE = "کالای من"
     const val SHOPPING_CART = "سبد خرید"
     const val PRODUCT_DETAILS = "صفحه محصول"
+    const val TECHNICAL_INFORMATION = "مشخصات فنی"
 }

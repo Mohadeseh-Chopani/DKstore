@@ -1,6 +1,7 @@
 package com.example.digikala.data.dataSource
 
 import android.util.Log
+import com.example.digikala.data.models.product.AttributeInformationData
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.network.StoreApiService
 import com.google.gson.Gson
@@ -20,15 +21,26 @@ class ProductDataSourceImp(val apiService: StoreApiService): ProductDataSource {
         }
 
         val jsonString = response.body()?.string() ?: throw Exception("Empty response body")
-        Log.d("HomePageDataSourceImp", "Raw JSON: $jsonString")
-
         val transformedJsonString = transformJson(jsonString)
-        Log.d("HomePageDataSourceImp", "Transformed JSON: $transformedJsonString")
-
         val productData = Gson().fromJson(transformedJsonString, ProductPageData::class.java)
 
         emit(productData)
     }.flowOn(Dispatchers.IO)
+
+
+    override suspend fun getAttributeData(id: Long): Flow<AttributeInformationData> = flow{
+        val response = apiService.getAttributeData(id)
+
+        if (!response.isSuccessful) {
+            throw Exception("Server returned error: ${response.code()}")
+        }
+        val jsonString = response.body()?.string() ?: throw Exception("Empty response body")
+        val transformedJsonString = transformJson(jsonString)
+        val productData = Gson().fromJson(transformedJsonString, AttributeInformationData::class.java)
+
+        emit(productData)
+    }.flowOn(Dispatchers.IO)
+
 
     private fun transformJson(jsonString: String): String {
         return try {

@@ -8,10 +8,11 @@ data class ProductPageData(
 data class Result(
     val product: Product,
     val bigdata_tracker_data: BigdataTrackerData,
+    val recommendation: Recommendation
 )
 
 data class Product(
-    val id: Double,
+    val id: Long,
     val category_id: Double,
     val category_title: String,
     val title_fa: String,
@@ -25,7 +26,7 @@ data class Product(
     val warehouse_stock: Double,
     val product_type: String,
     val properties: Properties,
-    val product_badges: List<ProductBadge>,
+    val product_badges: List<ProductBadge>?,
     val price: Price,
     val digiplus: Digiplus,
     val product_badge: ProductBadge2,
@@ -42,6 +43,30 @@ data class Product(
     val st_cmp_tacker: StCmpTacker,
 )
 
+data class Recommendation(
+    val related_products: List<RelatedProduct>
+)
+
+data class RelatedProduct(
+    val id: Long,
+    val category_id: Int,
+    val category_title: String,
+    val title_fa: String,
+    val title_en: String,
+    val rating: Rating?,
+    val brand: Brand,
+    val status: String,
+    val images: Images,
+    val default_variant_id: Long,
+    val second_default_variant_id: Long,
+    val parameters: Parameters,
+    val product_type: String,
+    val properties: Properties,
+    val product_badges: List<ProductBadge>?,
+    val price: Price,
+    val digiplus: Digiplus?,
+    val product_badge: ProductBadge2?
+)
 data class Rating(
     val rate: Double,
     val count: Double,
@@ -84,13 +109,13 @@ data class Payload(
 )
 
 data class Price(
-    val selling_price: Double,
-    val rrp_price: Double,
-    val order_limit: Double,
+    val selling_price: Long,
+    val rrp_price: Long,
+    val order_limit: Int,
     val is_incredible: Boolean,
-    val discount_percent: Double,
+    val discount_percent: Int,
     val timer: String,
-    val sold_percentage: Double,
+    val sold_percentage: Int,
     val badge: Badge,
 )
 
@@ -222,7 +247,7 @@ data class Grade(
 )
 
 data class Digiclub(
-    val point: Double,
+    val point: Int,
 )
 
 data class Price2(
