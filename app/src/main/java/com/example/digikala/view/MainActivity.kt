@@ -138,7 +138,9 @@ import com.example.digikala.ui.theme.DarkGreen
 import com.example.digikala.ui.theme.Green
 import com.example.digikala.ui.theme.LightBlue
 import com.example.digikala.ui.theme.LightGrayColor
+import com.example.digikala.ui.theme.MenuBackground
 import com.example.digikala.ui.theme.MenuItemColor
+import com.example.digikala.ui.theme.MenuItems
 import com.example.digikala.ui.theme.PrimaryColor
 import com.example.digikala.ui.theme.StarColor
 import com.example.digikala.utils.BottomNavigationItem
@@ -158,6 +160,7 @@ import org.koin.dsl.koinApplication
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import kotlin.math.log
 
 class MainActivity : ComponentActivity() {
 
@@ -172,7 +175,8 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             CompositionLocalProvider(
                 LocalProvider.LocalProductViewModel provides productViewModel,
-                LocalProvider.LocalNavController provides navController
+                LocalProvider.LocalNavController provides navController,
+                LocalProvider.LocalCategoriesViewModel provides categoriesViewModel
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -278,7 +282,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 startDestination = Const.HOME,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Const.HOME) { HomePage(navController, homeViewModel) }
+                composable(Const.HOME) { HomePage(homeViewModel) }
                 composable(Const.PRODUCT_DETAILS) { ProductDetails() }
                 composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage() }
@@ -388,7 +392,7 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun HomePage(navController: NavController, homeViewModel: HomeViewModel) {
+fun HomePage(homeViewModel: HomeViewModel) {
     val scrollState = rememberScrollState()
     val homeData by homeViewModel.homeData.collectAsState()
     val data: HomePageData
@@ -2791,12 +2795,22 @@ fun CategoriesPage() {
     val categoriesViewModel = LocalProvider.LocalCategoriesViewModel.current
     val categoriesData = categoriesViewModel.categoriesData.collectAsState()
 
+    LaunchedEffect(Unit) {
+        categoriesViewModel.getCategoriesData()
+    }
+
     when (categoriesData.value) {
         is NetworkState.Loading -> {
-            CircularProgressIndicator()
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryColor)
+            }
         }
         is NetworkState.Success -> {
             val data = (categoriesData.value as NetworkState.Success<CategoriesData>).data
+            Log.e("MOX", "CategoriesPageDesign: " +data.icons)
             CategoriesPageDesign(data)
         }
         is NetworkState.UnSuccess -> {
@@ -2810,6 +2824,26 @@ fun CategoriesPage() {
 
 @Composable
 fun CategoriesPageDesign(categoriesData: CategoriesData) {
+
+    val icons: List<Int> = listOf(
+        R.drawable.mobileicon,
+        R.drawable.electronic_icon,
+        R.drawable.home_kitchen_icon,
+        R.drawable.cat_home_electronic,
+        R.drawable.beauty,
+        R.drawable.vehicle,
+        R.drawable.tools,
+        R.drawable.fashion,
+        R.drawable.cat_jewelry,
+        R.drawable.cat_health,
+        R.drawable.book_stationary,
+        R.drawable.sport_out_door,
+        R.drawable.gift_cart,
+        R.drawable.fresh,
+        R.drawable.kids_toy,
+        R.drawable.native_business
+    )
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Box(
             modifier = Modifier
@@ -2824,17 +2858,38 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(0.2f)
-                        .background(color = LightGrayColor),
+                        .fillMaxWidth(0.25f)
+                        .background(color = MenuBackground)
+                        .padding(horizontal = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
 
                 ) {
-                    items(5) {
-                        Spacer(Modifier.fillMaxWidth().height(12.dp))
-                        Column {
-                            Image(painter = painterResource(R.drawable.category_icon), contentDescription = null)
-                            Text(text = "title")
+                    items(categoriesData.result.size) {
+                        Spacer(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(12.dp))
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+//                            Log.e("MOX", "CategoriesPageDesign: " +categoriesData.icons.size)
+                            Image(painter = rememberAsyncImagePainter(
+                                icons.get(
+                                    categoriesData.result.get(it).row_number-1
+                                )
+                            ), contentDescription = null)
+                            Text(
+                                text = categoriesData.result.get(it).title,
+                                fontSize = 12.sp,
+                                color = MenuItems,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .align(Alignment.CenterHorizontally)
+                            )
                         }
                     }
                 }

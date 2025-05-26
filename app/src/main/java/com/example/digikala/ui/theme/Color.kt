@@ -14,6 +14,8 @@ val Green = Color(0xFFDEFBDF)
 val DarkGreen = Color(0xFF528658)
 val StarColor = Color(0xFFFFC107)
 val LightBlue = Color(0xFF00BCD4)
+val MenuBackground = Color(0xFFF5F5F5)
+val MenuItems = Color(0xFF6E6E6E)
 
 val Purple40 = Color(0xFFED1944)
 val PurpleGrey40 = Color(0xFF625b71)
