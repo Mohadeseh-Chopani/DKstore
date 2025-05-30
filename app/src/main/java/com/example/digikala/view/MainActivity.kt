@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,7 +40,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -85,6 +85,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -113,6 +114,8 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.example.digikala.R
 import com.example.digikala.data.models.category.CategoriesData
+import com.example.digikala.data.models.category.Children
+import com.example.digikala.data.models.category.InnerChildren
 import com.example.digikala.data.models.home.Home1
 import com.example.digikala.data.models.home.Home2
 import com.example.digikala.data.models.home.Home3
@@ -134,8 +137,10 @@ import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.databinding.ProductInfoSectionBinding
 import com.example.digikala.network.StoreApiProvider
 import com.example.digikala.ui.theme.BackgroundColor
+import com.example.digikala.ui.theme.BackgroundMenuItemSelected
 import com.example.digikala.ui.theme.DarkGreen
 import com.example.digikala.ui.theme.Green
+import com.example.digikala.ui.theme.IconsUnSelected
 import com.example.digikala.ui.theme.LightBlue
 import com.example.digikala.ui.theme.LightGrayColor
 import com.example.digikala.ui.theme.MenuBackground
@@ -154,13 +159,10 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.internal.parseCookie
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.dsl.koinApplication
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
-import kotlin.math.log
 
 class MainActivity : ComponentActivity() {
 
@@ -2789,7 +2791,6 @@ fun PreviewProductInfoScreen() {
 }
 
 
-
 @Composable
 fun CategoriesPage() {
     val categoriesViewModel = LocalProvider.LocalCategoriesViewModel.current
@@ -2808,14 +2809,17 @@ fun CategoriesPage() {
                 CircularProgressIndicator(color = PrimaryColor)
             }
         }
+
         is NetworkState.Success -> {
             val data = (categoriesData.value as NetworkState.Success<CategoriesData>).data
-            Log.e("MOX", "CategoriesPageDesign: " +data.icons)
+//            Log.e("MOX", "CategoriesPageDesign: " +data.icons)
             CategoriesPageDesign(data)
         }
+
         is NetworkState.UnSuccess -> {
 
         }
+
         is NetworkState.Failure -> {
 
         }
@@ -2825,8 +2829,11 @@ fun CategoriesPage() {
 @Composable
 fun CategoriesPageDesign(categoriesData: CategoriesData) {
 
+    var selectedCategory by rememberSaveable { mutableStateOf<Int?>(1) }
+
     val icons: List<Int> = listOf(
         R.drawable.mobileicon,
+        R.drawable.electronic_icon,
         R.drawable.electronic_icon,
         R.drawable.home_kitchen_icon,
         R.drawable.cat_home_electronic,
@@ -2844,6 +2851,12 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
         R.drawable.native_business
     )
 
+    val currentSelectedMainCategory = remember(selectedCategory) {
+        selectedCategory?.let { id ->
+            categoriesData.result.find { it.id == id }
+        }
+    }
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Box(
             modifier = Modifier
@@ -2860,58 +2873,90 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                         .fillMaxHeight()
                         .fillMaxWidth(0.25f)
                         .background(color = MenuBackground)
-                        .padding(horizontal = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-
+                        .padding(vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    items(categoriesData.result.size) {
-                        Spacer(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(12.dp))
+                    items(categoriesData.result.size) { index ->
+                        val category = categoriesData.result[index]
+                        val rowIndexForIcon = category.row_number - 1
+
                         Column(
-                            Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp)
+                                .clickable {
+                                    selectedCategory = category.id
+                                    Log.i("MOX", "on click item: " + category.id)
+                                }
+                                .background(
+                                    color = if (selectedCategory == category.id) BackgroundMenuItemSelected else Color.Transparent
+                                ),
+
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-//                            Log.e("MOX", "CategoriesPageDesign: " +categoriesData.icons.size)
-                            Image(painter = rememberAsyncImagePainter(
-                                icons.get(
-                                    categoriesData.result.get(it).row_number-1
+                            if (rowIndexForIcon in icons.indices) {
+                                Image(
+                                    painter = painterResource(id = icons[rowIndexForIcon]),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(if (selectedCategory == category.id) PrimaryColor else IconsUnSelected)
                                 )
-                            ), contentDescription = null)
+                            }
+
                             Text(
-                                text = categoriesData.result.get(it).title,
+                                text = category.title,
                                 fontSize = 12.sp,
-                                color = MenuItems,
+                                color = if (selectedCategory == category.id) PrimaryColor else MenuItems,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center,
                                 modifier = Modifier
+                                    .fillMaxWidth()
                                     .padding(top = 4.dp)
-                                    .align(Alignment.CenterHorizontally)
+                                    .padding(horizontal = 6.dp)
                             )
                         }
                     }
                 }
 
-                LazyColumn(modifier = Modifier
-                    .padding(vertical = 12.dp, horizontal = 12.dp)){
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 12.dp, horizontal = 12.dp)
+                ) {
                     item {
-                        Text(text = "محصولات آرایشی",
-                            fontSize = 18.sp,
-                            color = LightBlue,
-                            fontWeight = FontWeight.Bold)
+                        Row {
+                            Text(
+                                text = "همه محصولات ${currentSelectedMainCategory?.title ?: "نامعلوم"}",
+                                fontSize = 14.sp,
+                                color = LightBlue,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Medium
+                            )
+
+                            Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null, tint = LightBlue)
+                        }
                     }
+                    val childrenOfSelectedCategory = currentSelectedMainCategory?.children
 
-                    val items = listOf(
-                        "لوازم آرایشی" to listOf("آرایش ابرو", "آرایش چشم", "آرایش صورت", "آرایش لب", "ابزار آرایشی", "ناخن"),
-                        "مراقبت پوست" to listOf("کرم", "ماسک", "تونر"),
-                        "مراقبت مو" to listOf("شامپو", "نرم‌کننده", "روغن مو")
-                    )
-
-
-                    items(5) {
-                        ExpandableMenuItem("لوازم آرایشی", items )
+                    childrenOfSelectedCategory?.let { children ->
+                        items(children.size) { itemIndex ->
+                            children.getOrNull(itemIndex)?.let { childItem ->
+                                Log.i("MOX", "CategoriesPageDesign: "+ childItem.title)
+                                ExpandableMenuItem(childItem.title, childItem)
+                            }
+                        }
+                    } ?: run {
+                        item {
+                            Text(
+                                text = "هیچ زیر دسته‌بندی برای این گروه وجود ندارد.",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                textAlign = TextAlign.Center,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
             }
@@ -2920,13 +2965,17 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
 }
 
 @Composable
-fun ExpandableMenuItem(title: String, subItems: List<Pair<String, List<String>>>) {
+fun ExpandableMenuItem(title: String, itemData: Children) {
     var expanded by remember { mutableStateOf(false) }
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "")
 
     Column(modifier = Modifier
         .fillMaxWidth()
-        .clickable { expanded = !expanded }
+        .clickable {
+            if (!itemData.children.isNullOrEmpty()) {
+                expanded = !expanded
+            }
+        }
         .padding(16.dp)) {
 
         Row(
@@ -2934,23 +2983,78 @@ fun ExpandableMenuItem(title: String, subItems: List<Pair<String, List<String>>>
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title, fontWeight = FontWeight.Bold)
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Expand",
-                modifier = Modifier.rotate(rotation)
+            Text(
+                text = title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal
             )
+            if (!itemData.children.isNullOrEmpty()) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Expand",
+                    modifier = Modifier.rotate(rotation)
+                )
+            }
         }
 
         AnimatedVisibility(visible = expanded) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                subItems.forEach { subItem ->
-
+            if (!itemData.children.isNullOrEmpty()) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(itemData.children.size) { index ->
+                        val grandChild = itemData.children.getOrNull(index)
+                        Box(
+                            modifier = Modifier
+                                .background(color = Color.Transparent, shape = CircleShape)
+                                .clickable {
+                                    Log.d("MOX", "Clicked on grandchild: ${grandChild?.title}")
+                                }
+                        ) {
+                            grandChild?.let {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            Log.d("MOX", "Clicked on grandchild: ${it.title}")
+                                        }
+                                        .padding(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .background(color = Color.White, shape = CircleShape)
+                                            .border(width = 1.dp, color = Color.LightGray)
+                                            .clip(CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(it.image),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .size(60.dp)
+                                                .clip(CircleShape)
+                                                .background(Color.Transparent)
+                                        )
+                                    }
+                                    Text(
+                                        text = it.title,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 12.sp,
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
