@@ -7,6 +7,7 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface StoreApiService {
@@ -27,4 +28,15 @@ interface StoreApiService {
 
     @GET("categories/")
     suspend fun getCategoriesData(): Response<ResponseBody>
+
+    @GET("search/category-{categorySlug}/{brandSlug}/")
+    suspend fun getProductsByCategoryAndBrand(
+        @Path("categorySlug") categorySlug: String,
+        @Path("brandSlug") brandSlug: String
+    ): Response<ResponseBody>
+
+    @GET("search/")
+    suspend fun getSearchData(
+        @Query("q") query: String,
+    ): Response<ResponseBody>
 }

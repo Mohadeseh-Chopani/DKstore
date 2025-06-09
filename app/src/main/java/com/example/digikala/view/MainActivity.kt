@@ -50,7 +50,9 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TabRowDefaults.Divider
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -59,6 +61,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -115,7 +118,6 @@ import coil.request.ImageRequest
 import com.example.digikala.R
 import com.example.digikala.data.models.category.CategoriesData
 import com.example.digikala.data.models.category.Children
-import com.example.digikala.data.models.category.InnerChildren
 import com.example.digikala.data.models.home.Home1
 import com.example.digikala.data.models.home.Home2
 import com.example.digikala.data.models.home.Home3
@@ -134,6 +136,7 @@ import com.example.digikala.data.models.product.LatestComment
 import com.example.digikala.data.models.product.LatestQuestion
 import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
+import com.example.digikala.data.models.search.SearchData
 import com.example.digikala.databinding.ProductInfoSectionBinding
 import com.example.digikala.network.StoreApiProvider
 import com.example.digikala.ui.theme.BackgroundColor
@@ -169,6 +172,7 @@ class MainActivity : ComponentActivity() {
     private val homeViewModel: HomeViewModel by viewModel()
     private val productViewModel: ProductViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
+    private val searchViewModel: SearchViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -178,7 +182,8 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalProvider.LocalProductViewModel provides productViewModel,
                 LocalProvider.LocalNavController provides navController,
-                LocalProvider.LocalCategoriesViewModel provides categoriesViewModel
+                LocalProvider.LocalCategoriesViewModel provides categoriesViewModel,
+                LocalProvider.LocalSearchViewModel provides searchViewModel,
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -249,6 +254,12 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                         )
                     }
 
+                    Const.SEARCH -> {
+                        Column {
+                            Spacer(modifier = Modifier.height(40.dp))
+                        }
+                    }
+
                     else -> {
                         Column {
                             Spacer(modifier = Modifier.height(40.dp))
@@ -288,6 +299,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 composable(Const.PRODUCT_DETAILS) { ProductDetails() }
                 composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage() }
+                composable(Const.SEARCH) { SearchPage() }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage(navController) }
                 composable(Const.PROFILE) { ProfilePage(navController) }
             }
@@ -1319,9 +1331,9 @@ fun RowProductList4(result: Home4) {
                     height = itemHeight,
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price,
-                    discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price,
+                    price = result.products.get(product).price?.selling_price,
+                    discount = result.products.get(product).price?.discount_percent,
+                    oldPrice = result.products.get(product).price?.rrp_price,
                     id = result.products.get(product).id
                 )
             }
@@ -1551,9 +1563,9 @@ fun RowProductList8(result: Home8) {
                     height = itemHeight,
                     imageRes = result.products.get(product).images.main,
                     title = result.products.get(product).title_fa,
-                    price = result.products.get(product).price.selling_price!!,
-                    discount = result.products.get(product).price.discount_percent,
-                    oldPrice = result.products.get(product).price.rrp_price,
+                    price = result.products.get(product).price?.selling_price!!,
+                    discount = result.products.get(product).price?.discount_percent,
+                    oldPrice = result.products.get(product).price?.rrp_price,
                     id = result.products.get(product).id
                 )
             }
@@ -1607,11 +1619,15 @@ fun ShowMoreSection(itemWidth: Dp, itemHeight: Dp) {
 
 @Composable
 fun searchBox() {
+    val navController = LocalProvider.LocalNavController.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .height(50.dp),
+            .height(50.dp)
+            .clickable {
+                navController.navigate(Const.SEARCH)
+            },
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -2023,11 +2039,6 @@ fun ProductActionsRow(
 fun formatNumberToPersian(value: Double): String {
     val decimalFormat = DecimalFormat("#.#", DecimalFormatSymbols(Locale("fa", "IR")))
     return decimalFormat.format(value)
-}
-
-fun DisplayNumber(number: Double): String {
-    val formattedRate = formatNumberToPersian(number)
-    return formattedRate
 }
 
 @Composable
@@ -2784,7 +2795,7 @@ fun AttributesDesign(attributes: DetailSection) {
 }
 
 
-@Preview
+//@Preview
 @Composable
 fun PreviewProductInfoScreen() {
 //    ProductInfoXmlView()
@@ -2942,7 +2953,7 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                     childrenOfSelectedCategory?.let { children ->
                         items(children.size) { itemIndex ->
                             children.getOrNull(itemIndex)?.let { childItem ->
-                                Log.i("MOX", "CategoriesPageDesign: "+ childItem.title)
+                                Log.i("MOX", "CategoriesPageDesign: " + childItem.title)
                                 ExpandableMenuItem(childItem.title, childItem)
                             }
                         }
@@ -3061,6 +3072,258 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
     }
 }
 
+@Preview
+@Composable
+fun SearchPage() {
+    val searchViewModel = LocalProvider.LocalSearchViewModel.current
+    val navController = LocalProvider.LocalNavController.current
+    val data = searchViewModel.searchData.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+    val hasSearched = remember { mutableStateOf(false) }
+
+
+
+    Column {
+        Row {
+            Icon(
+                Icons.Default.ArrowForward, contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 8.dp)
+                    .size(28.dp)
+                    .clickable {
+                        navController.navigate(Const.HOME) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CustomOutlinedTextField { query ->
+                    coroutineScope.launch {
+                        hasSearched.value = true
+                        searchViewModel.getSearchData(query)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier
+            .fillMaxWidth()
+            .height(8.dp)
+        )
+
+
+        when (data.value) {
+            is NetworkState.Loading -> {
+                if (hasSearched.value) {
+                    CircularProgressIndicator(color = PrimaryColor,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally))
+                }
+            }
+            is NetworkState.Success -> {
+                if (hasSearched.value) {
+                    val response = (data.value as NetworkState.Success<SearchData>).data
+                    SearchItemDesign(response)
+                }
+            }
+            is NetworkState.UnSuccess -> {
+
+            }
+            is NetworkState.Failure -> {
+
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
+    var searchText by remember { mutableStateOf("") }
+
+    OutlinedTextField(
+        value = searchText,
+        onValueChange = { newText -> searchText = newText },
+        label = { Text("جستجو در همه کالاها") },
+        singleLine = true,
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            textColor = Color.DarkGray,
+            cursorColor = Color.Blue,
+            focusedBorderColor = PrimaryColor,
+            unfocusedBorderColor = Color.Gray,
+            focusedLabelColor = PrimaryColor,
+            unfocusedLabelColor = Color.Gray,
+            placeholderColor = Color.DarkGray
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        trailingIcon = {
+            if (searchText.isNotEmpty()) {
+                IconButton(
+                    onClick = {
+                        onSearch(searchText)
+                    },
+                    modifier = Modifier
+                ) {
+                    Icon(Icons.Default.Search, contentDescription = "Clear Text")
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun SearchItemDesign(searchData: SearchData) {
+    LazyColumn {
+        items(searchData.result.products.size) { index ->
+            val product = searchData.result.products.get(index)
+
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.width(120.dp)
+                    ) {
+
+                        Image(
+                            painter = rememberAsyncImagePainter(product.images.main),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .height(100.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            listOf(Color.Black, Color.Gray, Color(0xFF800080)).forEach { color ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                )
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = searchData.result.products.get(index).title_fa,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
+                                Text(
+                                    text = formatNumberToPersian(product.rating.rate),
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+
+                            Text(
+                                text = "تنها ۱ عدد در انبار باقی مانده",
+                                color = PrimaryColor,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text =  ConvertNumbers.convertToPersianDigits(
+                                        ConvertNumbers.convertRialToToman(product.price.selling_price.toString())),
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                )
+
+                                if (product.price.rrp_price != null) {
+                                    Text(
+                                        text = ConvertNumbers.convertToPersianDigits(
+                                            ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                        ),
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            textDecoration = TextDecoration.LineThrough,
+                                            color = Color.Gray
+                                        )
+                                    )
+                                }
+                            }
+
+                            if (product.price.discount_percent != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(PrimaryColor, shape = RoundedCornerShape(12))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                        .align(Alignment.CenterVertically)
+                                ) {
+                                    Text(
+                                        text = product.price.discount_percent.toString(),
+                                        color = Color.White,
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 @Composable
 fun ShoppingCartPage(navController: NavController) {
 }
@@ -3073,8 +3336,7 @@ fun ProfilePage(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
-
-    ProductDetails()
+//    ProductDetails()
 //    ProductDetailsScreen()
 //    ProductDetailsScreen()
 //    DigikalaTheme {

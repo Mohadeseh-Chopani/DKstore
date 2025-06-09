@@ -7,4 +7,5 @@ object Const {
     const val SHOPPING_CART = "سبد خرید"
     const val PRODUCT_DETAILS = "صفحه محصول"
     const val TECHNICAL_INFORMATION = "مشخصات فنی"
+    const val SEARCH = "سرچ"
 }
