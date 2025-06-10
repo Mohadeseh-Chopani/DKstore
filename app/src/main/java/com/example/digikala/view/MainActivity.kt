@@ -2872,8 +2872,7 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(0.25f)
-                        .background(color = MenuBackground)
-                        .padding(vertical = 6.dp),
+                        .background(color = MenuBackground),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -2884,7 +2883,6 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp)
                                 .clickable {
                                     selectedCategory = category.id
                                     Log.i("MOX", "on click item: " + category.id)
@@ -2899,7 +2897,9 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                                 Image(
                                     painter = painterResource(id = icons[rowIndexForIcon]),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(if (selectedCategory == category.id) PrimaryColor else IconsUnSelected)
+                                    colorFilter = ColorFilter.tint(if (selectedCategory == category.id) PrimaryColor else IconsUnSelected),
+                                    modifier = Modifier
+                                        .padding(top = 6.dp)
                                 )
                             }
 
@@ -2912,7 +2912,7 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 4.dp)
+                                    .padding(top = 4.dp, bottom = 6.dp)
                                     .padding(horizontal = 6.dp)
                             )
                         }
