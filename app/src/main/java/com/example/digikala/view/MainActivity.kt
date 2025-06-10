@@ -3011,7 +3011,7 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                         val grandChild = itemData.children.getOrNull(index)
                         Box(
                             modifier = Modifier
-                                .background(color = Color.Transparent, shape = CircleShape)
+                                .background(color = Color.Transparent)
                                 .clickable {
                                     Log.d("MOX", "Clicked on grandchild: ${grandChild?.title}")
                                 }
@@ -3029,9 +3029,9 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                                     Box(
                                         modifier = Modifier
                                             .size(64.dp)
-                                            .background(color = Color.White, shape = CircleShape)
+                                            .background(color = Color.White)
                                             .border(width = 1.dp, color = Color.LightGray)
-                                            .clip(CircleShape),
+                                            .padding(4.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Image(
@@ -3039,7 +3039,6 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                                             contentDescription = null,
                                             modifier = Modifier
                                                 .size(60.dp)
-                                                .clip(CircleShape)
                                                 .background(Color.Transparent)
                                         )
                                     }
