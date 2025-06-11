@@ -1018,7 +1018,7 @@ fun ProductItemInHomePage(
                 painter = rememberAsyncImagePainter(model = imageRes),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(width * 0.75f)  // مقیاس تصویر بر اساس عرض آیتم
+                    .size(width * 0.75f)  // image width based on page width
                     .clip(RoundedCornerShape(8.dp))
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -1792,7 +1792,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                         Text(
                             text = ConvertNumbers.convertToPersianDigits("${data.result.product.price.discount_percent}٪"),
                             color = Color.White,
-                            fontWeight = FontWeight.Normal,
+                            fontWeight = FontWeight.Medium,
                             fontFamily = MyCustomFont,
                             fontSize = 13.sp,
                             modifier = Modifier
@@ -3253,19 +3253,21 @@ fun SearchItemDesign(searchData: SearchData) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
                                 Text(
-                                    text = formatNumberToPersian(product.rating.rate),
+                                    text = formatNumberToPersian(searchData.result.products.get(index)
+                                        .default_variant.seller.stars),
                                     fontFamily = MyCustomFont,
                                     fontWeight = FontWeight.Normal,
+                                    fontSize = 14.sp,
                                     modifier = Modifier.padding(start = 4.dp)
                                 )
                             }
 
-                            Text(
-                                text = "تنها ۱ عدد در انبار باقی مانده",
-                                color = PrimaryColor,
-                                fontFamily = MyCustomFont,
-                                fontWeight = FontWeight.Normal,
-                                )
+//                            Text(
+//                                text = product.product_badges.get(0).payload.text,
+//                                color = PrimaryColor,
+//                                fontFamily = MyCustomFont,
+//                                fontWeight = FontWeight.Normal,
+//                                )
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -3276,43 +3278,76 @@ fun SearchItemDesign(searchData: SearchData) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text(
-                                    text =  ConvertNumbers.convertToPersianDigits(
-                                        ConvertNumbers.convertRialToToman(product.price.selling_price.toString())),
-                                    fontFamily = MyCustomFont,
-                                    fontWeight = FontWeight.Normal,
-                                )
 
                                 if (product.price.rrp_price != null) {
-                                    Text(
-                                        text = ConvertNumbers.convertToPersianDigits(
-                                            ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
-                                        ),
-                                        fontFamily = MyCustomFont,
-                                        fontWeight = FontWeight.Normal,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            textDecoration = TextDecoration.LineThrough,
-                                            color = Color.Gray
+                                    if (product.price.rrp_price != product.price.selling_price) {
+                                        Text(
+                                            text = ConvertNumbers.convertToPersianDigits(
+                                                ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                            ),
+                                            fontFamily = MyCustomFont,
+                                            fontWeight = FontWeight.Normal,
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                textDecoration = TextDecoration.LineThrough,
+                                                color = Color.Gray
+                                            ), fontSize = 14.sp
                                         )
-                                    )
+                                    }
                                 }
+
+                                Text(
+                                    text =  "${ConvertNumbers.convertToPersianDigits(
+                                        ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
+                                    )} تومان ",
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp,
+                                    modifier = Modifier
+                                )
                             }
 
-                            if (product.price.discount_percent != null) {
+                            if (product.price.discount_percent != 0) {
+
                                 Box(
                                     modifier = Modifier
-                                        .background(PrimaryColor, shape = RoundedCornerShape(12))
-                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+//                                        .background(PrimaryColor, shape = RoundedCornerShape(12))
+                                        .padding(horizontal = 14.dp, vertical = 4.dp)
                                         .align(Alignment.CenterVertically)
                                 ) {
                                     Text(
-                                        text = product.price.discount_percent.toString(),
+                                        text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
                                         color = Color.White,
+                                        fontWeight = FontWeight.Medium,
                                         fontFamily = MyCustomFont,
-                                        fontWeight = FontWeight.Normal,
-                                        textAlign = TextAlign.Center
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 13.sp,
+                                        modifier = Modifier
+                                            .background(
+                                                PrimaryColor,
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            .align(Alignment.Center)
                                     )
                                 }
+
+//                                Box(
+//                                    modifier = Modifier
+//                                        .background(PrimaryColor, shape = RoundedCornerShape(12))
+//                                        .padding(horizontal = 20.dp, vertical = 4.dp)
+//                                        .align(Alignment.CenterVertically)
+//                                ) {
+//                                    Text(
+//                                        text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
+//                                        color = Color.White,
+//                                        fontFamily = MyCustomFont,
+//                                        fontWeight = FontWeight.Medium,
+//                                        textAlign = TextAlign.Center,
+//                                        fontSize = 13.sp,
+//                                        modifier = Modifier
+//                                            .align(Alignment.Center)
+//                                    )
+//                                }
                             }
                         }
                     }
