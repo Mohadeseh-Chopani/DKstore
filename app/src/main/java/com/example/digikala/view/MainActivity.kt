@@ -2883,8 +2883,7 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(0.25f)
-                        .background(color = MenuBackground)
-                        .padding(vertical = 6.dp),
+                        .background(color = MenuBackground),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -2895,7 +2894,6 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp)
                                 .clickable {
                                     selectedCategory = category.id
                                     Log.i("MOX", "on click item: " + category.id)
@@ -2910,7 +2908,9 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                                 Image(
                                     painter = painterResource(id = icons[rowIndexForIcon]),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(if (selectedCategory == category.id) PrimaryColor else IconsUnSelected)
+                                    colorFilter = ColorFilter.tint(if (selectedCategory == category.id) PrimaryColor else IconsUnSelected),
+                                    modifier = Modifier
+                                        .padding(top = 6.dp)
                                 )
                             }
 
@@ -2923,7 +2923,7 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 4.dp)
+                                    .padding(top = 4.dp, bottom = 6.dp)
                                     .padding(horizontal = 6.dp)
                             )
                         }
@@ -3022,7 +3022,7 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                         val grandChild = itemData.children.getOrNull(index)
                         Box(
                             modifier = Modifier
-                                .background(color = Color.Transparent, shape = CircleShape)
+                                .background(color = Color.Transparent)
                                 .clickable {
                                     Log.d("MOX", "Clicked on grandchild: ${grandChild?.title}")
                                 }
@@ -3040,9 +3040,9 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                                     Box(
                                         modifier = Modifier
                                             .size(64.dp)
-                                            .background(color = Color.White, shape = CircleShape)
+                                            .background(color = Color.White)
                                             .border(width = 1.dp, color = Color.LightGray)
-                                            .clip(CircleShape),
+                                            .padding(4.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Image(
@@ -3050,7 +3050,6 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                                             contentDescription = null,
                                             modifier = Modifier
                                                 .size(60.dp)
-                                                .clip(CircleShape)
                                                 .background(Color.Transparent)
                                         )
                                     }
