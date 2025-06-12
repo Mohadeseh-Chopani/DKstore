@@ -1,5 +1,16 @@
 package com.example.digikala.data.models.search
 
+import com.example.digikala.data.models.product.Color
+import com.example.digikala.data.models.product.Digiclub
+import com.example.digikala.data.models.product.Digiplus2
+import com.example.digikala.data.models.product.Price2
+import com.example.digikala.data.models.product.Seller
+import com.example.digikala.data.models.product.ShipmentMethods
+import com.example.digikala.data.models.product.Statistics
+import com.example.digikala.data.models.product.Variant
+import com.example.digikala.data.models.product.VariantBadge
+import com.example.digikala.data.models.product.Warranty
+
 data class SearchData(
     val status: Int,
     val result: Result
@@ -155,6 +166,24 @@ data class Sort(
 
 data class Meta(
     val share_url: String
+)
+
+data class Variant(
+    val id: Long,
+    val rank: Double,
+    val rate: Double,
+    val statistics: Statistics,
+    val status: String,
+    val order_limit: Double,
+    val properties: Any?,
+    val digiplus: Digiplus2,
+    val warranty: Warranty,
+    val color: Color,
+    val seller: Seller,
+    val digiclub: Digiclub,
+    val price: Price2,
+    val shipment_methods: ShipmentMethods,
+    val variant_badges: List<VariantBadge>,
 )
 
 data class Pager(
@@ -389,8 +418,8 @@ data class AdvertisementSponsored_brandsProductsItemProduct_badge(
 
 data class ProductsItem(
     val platforms: List<String>,
-    val default_variant: ProductsItemDefault_variant,
-    val id: Int,
+    val default_variant: ProductsItemDefault_variant?,
+    val id: Long,
     val category_id: Int,
     val category_title: String,
     val title_fa: String,
@@ -407,7 +436,8 @@ data class ProductsItem(
     val product_badges: List<ProductsItemProduct_badgesItem>,
     val price: ProductsItemPrice,
     val digiplus: ProductsItemDigiplus,
-    val product_badge: ProductsItemProduct_badge
+    val product_badge: ProductsItemProduct_badge,
+    val variant: List<Variant>
 )
 
 data class ProductsItemDefault_variant(
@@ -420,12 +450,13 @@ data class ProductsItemDefault_variant(
     val properties: Any?,
     val digiplus: ProductsItemDefault_variantDigiplus,
     val warranty: ProductsItemDefault_variantWarranty,
-    val color: ProductsItemDefault_variantColor,
+    val color: ProductsItemDefault_variantColor?,
     val seller: ProductsItemDefault_variantSeller,
     val digiclub: ProductsItemDefault_variantDigiclub,
     val insurance: ProductsItemDefault_variantInsurance,
     val price: ProductsItemDefault_variantPrice,
-    val shipment_methods: ProductsItemDefault_variantShipment_methods
+    val shipment_methods: ProductsItemDefault_variantShipment_methods,
+//    val variant_badges: ProductsItemProduct_badgesItem
 )
 
 data class ProductsItemDefault_variantStatistics(

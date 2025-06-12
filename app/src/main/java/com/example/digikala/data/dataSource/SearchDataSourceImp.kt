@@ -1,6 +1,5 @@
 package com.example.digikala.data.dataSource
 
-import com.example.digikala.data.models.category.CategoriesData
 import com.example.digikala.data.models.search.SearchData
 import com.example.digikala.network.StoreApiService
 import com.example.digikala.utils.ProcessJson

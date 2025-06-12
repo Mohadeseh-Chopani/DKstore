@@ -4,6 +4,7 @@ package com.example.digikala.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,6 +12,7 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -61,7 +63,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -174,6 +175,7 @@ class MainActivity : ComponentActivity() {
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val searchViewModel: SearchViewModel by viewModel()
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -199,6 +201,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
@@ -404,6 +407,7 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomePage(homeViewModel: HomeViewModel) {
@@ -662,6 +666,7 @@ fun HomePage(homeViewModel: HomeViewModel) {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.P)
 @ExperimentalPagerApi
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -675,7 +680,9 @@ fun ImageSlider(
 
     val imageLoader = ImageLoader.Builder(LocalContext.current)
         .components {
-            add(ImageDecoderDecoder.Factory()) //  support WebP and GIF
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                add(ImageDecoderDecoder.Factory())
+            } //  support WebP and GIF
         }
         .build()
 
@@ -3091,13 +3098,7 @@ fun SearchPage() {
                     .padding(start = 8.dp)
                     .size(28.dp)
                     .clickable {
-                        navController.navigate(Const.HOME) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        navController.popBackStack()
                     }
             )
 
@@ -3116,29 +3117,35 @@ fun SearchPage() {
             }
         }
 
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
         )
 
 
         when (data.value) {
             is NetworkState.Loading -> {
                 if (hasSearched.value) {
-                    CircularProgressIndicator(color = PrimaryColor,
+                    CircularProgressIndicator(
+                        color = PrimaryColor,
                         modifier = Modifier
-                            .align(Alignment.CenterHorizontally))
+                            .align(Alignment.CenterHorizontally)
+                    )
                 }
             }
+
             is NetworkState.Success -> {
                 if (hasSearched.value) {
                     val response = (data.value as NetworkState.Success<SearchData>).data
                     SearchItemDesign(response)
                 }
             }
+
             is NetworkState.UnSuccess -> {
 
             }
+
             is NetworkState.Failure -> {
 
             }
@@ -3184,6 +3191,13 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
 
 @Composable
 fun SearchItemDesign(searchData: SearchData) {
+    val productViewModel = LocalProvider.LocalProductViewModel.current
+    val navController = LocalProvider.LocalNavController.current
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.23f
+    val itemHeight = screenWidth * 0.25f
+
     LazyColumn {
         items(searchData.result.products.size) { index ->
             val product = searchData.result.products.get(index)
@@ -3193,50 +3207,59 @@ fun SearchItemDesign(searchData: SearchData) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp)
+                    .height(itemHeight + 40.dp)
+                    .clickable {
+                        productViewModel.getProductData(product.id)
+                        navController.navigate(Const.PRODUCT_DETAILS)
+                    }
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(120.dp)
+                        modifier = Modifier.width(itemWidth)
                     ) {
-
                         Image(
                             painter = rememberAsyncImagePainter(product.images.main),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .height(100.dp)
+                                .height(itemHeight)
                                 .fillMaxWidth()
                                 .padding(horizontal = 8.dp)
                                 .clip(RoundedCornerShape(5.dp))
                         )
 
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            listOf(Color.Black, Color.Gray, Color(0xFF800080)).forEach { color ->
+                        product.default_variant?.color?.hex_code?.let {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
                                 Box(
                                     modifier = Modifier
                                         .size(10.dp)
                                         .clip(CircleShape)
-                                        .background(color)
+                                        .background(
+                                            color = Color(android.graphics.Color.parseColor(it)),
+
+                                            )
                                 )
                             }
                         }
                     }
 
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = searchData.result.products.get(index).title_fa,
+                            text = product.title_fa,
                             fontFamily = MyCustomFont,
                             fontWeight = FontWeight.Medium,
                             maxLines = 2,
@@ -3253,24 +3276,24 @@ fun SearchItemDesign(searchData: SearchData) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
                                 Text(
-                                    text = formatNumberToPersian(searchData.result.products.get(index)
-                                        .default_variant.seller.stars),
+                                    text = formatNumberToPersian(product.default_variant?.seller?.stars!!),
                                     fontFamily = MyCustomFont,
                                     fontWeight = FontWeight.Normal,
                                     fontSize = 14.sp,
                                     modifier = Modifier.padding(start = 4.dp)
                                 )
                             }
-
-//                            Text(
-//                                text = product.product_badges.get(0).payload.text,
-//                                color = PrimaryColor,
-//                                fontFamily = MyCustomFont,
-//                                fontWeight = FontWeight.Normal,
-//                                )
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+//                        Text(
+//                            text = product.default_variant.variant_badges.payload.text,
+//                            fontFamily = MyCustomFont,
+//                            fontWeight = FontWeight.Normal,
+//                            color = PrimaryColor,
+//                            fontSize = 16.sp
+//                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -3278,39 +3301,38 @@ fun SearchItemDesign(searchData: SearchData) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-
-                                if (product.price.rrp_price != null) {
-                                    if (product.price.rrp_price != product.price.selling_price) {
-                                        Text(
-                                            text = ConvertNumbers.convertToPersianDigits(
-                                                ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
-                                            ),
-                                            fontFamily = MyCustomFont,
-                                            fontWeight = FontWeight.Normal,
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                textDecoration = TextDecoration.LineThrough,
-                                                color = Color.Gray
-                                            ), fontSize = 14.sp
-                                        )
-                                    }
+                                if (product.price.rrp_price != null &&
+                                    product.price.rrp_price != product.price.selling_price
+                                ) {
+                                    Text(
+                                        text = ConvertNumbers.convertToPersianDigits(
+                                            ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                        ),
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            textDecoration = TextDecoration.LineThrough,
+                                            color = Color.Gray
+                                        ),
+                                        fontSize = 14.sp
+                                    )
                                 }
 
                                 Text(
-                                    text =  "${ConvertNumbers.convertToPersianDigits(
-                                        ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
-                                    )} تومان ",
+                                    text = "${
+                                        ConvertNumbers.convertToPersianDigits(
+                                            ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
+                                        )
+                                    } تومان ",
                                     fontFamily = MyCustomFont,
                                     fontWeight = FontWeight.Normal,
-                                    fontSize = 16.sp,
-                                    modifier = Modifier
+                                    fontSize = 16.sp
                                 )
                             }
 
                             if (product.price.discount_percent != 0) {
-
                                 Box(
                                     modifier = Modifier
-//                                        .background(PrimaryColor, shape = RoundedCornerShape(12))
                                         .padding(horizontal = 14.dp, vertical = 4.dp)
                                         .align(Alignment.CenterVertically)
                                 ) {
@@ -3320,39 +3342,21 @@ fun SearchItemDesign(searchData: SearchData) {
                                         fontWeight = FontWeight.Medium,
                                         fontFamily = MyCustomFont,
                                         textAlign = TextAlign.Center,
-                                        fontSize = 13.sp,
+                                        fontSize = 14.sp,
                                         modifier = Modifier
                                             .background(
                                                 PrimaryColor,
                                                 shape = RoundedCornerShape(4.dp)
                                             )
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
-                                            .align(Alignment.Center)
                                     )
                                 }
-
-//                                Box(
-//                                    modifier = Modifier
-//                                        .background(PrimaryColor, shape = RoundedCornerShape(12))
-//                                        .padding(horizontal = 20.dp, vertical = 4.dp)
-//                                        .align(Alignment.CenterVertically)
-//                                ) {
-//                                    Text(
-//                                        text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
-//                                        color = Color.White,
-//                                        fontFamily = MyCustomFont,
-//                                        fontWeight = FontWeight.Medium,
-//                                        textAlign = TextAlign.Center,
-//                                        fontSize = 13.sp,
-//                                        modifier = Modifier
-//                                            .align(Alignment.Center)
-//                                    )
-//                                }
                             }
                         }
                     }
                 }
             }
+
         }
     }
 }
