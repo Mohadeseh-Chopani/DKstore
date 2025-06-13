@@ -7,7 +7,6 @@ import retrofit2.http.Header
 
 interface HomePageDataSource {
     @GET("home")
-    suspend fun getHomePageData(
-        @Header("one-api-token") token: String
+    fun getHomePageData(
     ): Flow<HomePageData>
 }

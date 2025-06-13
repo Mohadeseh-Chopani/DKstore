@@ -12,6 +12,11 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 class CategoriesViewModel(val categoriesRepositoryImp: CategoriesRepositoryImp): ViewModel() {
+
+    init {
+//        getCategoriesData()
+    }
+
     val _categoriesData = MutableStateFlow<NetworkState<CategoriesData>>(NetworkState.Loading)
     val categoriesData: StateFlow<NetworkState<CategoriesData>> get() = _categoriesData
 

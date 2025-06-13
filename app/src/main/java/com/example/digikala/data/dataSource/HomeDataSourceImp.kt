@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
 class HomePageDataSourceImp(val apiService: StoreApiService) : HomePageDataSource {
-    override suspend fun getHomePageData(token: String): Flow<HomePageData> = flow {
-        val response = apiService.getHomePageData(token)
+    override fun getHomePageData(): Flow<HomePageData> = flow {
+        val response = apiService.getHomePageData()
 
         if (!response.isSuccessful) {
             throw Exception("Server returned error: ${response.code()}")

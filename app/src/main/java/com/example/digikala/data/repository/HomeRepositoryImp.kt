@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 class HomeRepositoryImp(private val HomePageDataSourceImp: HomePageDataSourceImp): HomeRepository {
 
-    override suspend fun getHomePageData(token: String): Flow<HomePageData> {
-        return HomePageDataSourceImp.getHomePageData(token)
+    override fun getHomePageData(): Flow<HomePageData> {
+        return HomePageDataSourceImp.getHomePageData()
     }
 }

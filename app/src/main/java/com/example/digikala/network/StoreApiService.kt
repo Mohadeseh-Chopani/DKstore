@@ -13,7 +13,6 @@ import retrofit2.http.Query
 interface StoreApiService {
     @GET("home")
     suspend fun getHomePageData(
-        @Header("one-api-token") token: String
     ): Response<ResponseBody>
 
     @GET("product/")
