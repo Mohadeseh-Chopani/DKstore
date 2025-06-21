@@ -8,4 +8,5 @@ object Const {
     const val PRODUCT_DETAILS = "صفحه محصول"
     const val TECHNICAL_INFORMATION = "مشخصات فنی"
     const val SEARCH = "سرچ"
+    const val SHOW_MORE = "نمایش همه"
 }

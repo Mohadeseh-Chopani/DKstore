@@ -242,7 +242,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                         )
                     }
 
-                    Const.TECHNICAL_INFORMATION -> {
+                    Const.TECHNICAL_INFORMATION, Const.SHOW_MORE -> {
                         TopAppBar(
                             title = { Text(Const.TECHNICAL_INFORMATION) },
                             navigationIcon = {
@@ -300,6 +300,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Const.HOME) { HomePage(homeViewModel) }
+                composable(Const.SHOW_MORE) { ShowMorePage() }
                 composable(Const.PRODUCT_DETAILS) { ProductDetails() }
                 composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage() }
@@ -326,38 +327,6 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 
     if (currentRoute(navController) == Const.PRODUCT_DETAILS) {
 
-//        Surface(
-//            modifier = Modifier
-//                .background(Color.White),
-////            tonalElevation = 2.dp,
-////            shadowElevation = 2.dp
-//        ) {
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(16.dp),
-//                verticalAlignment = Alignment.CenterVertically,
-//                horizontalArrangement = Arrangement.SpaceBetween
-//            ) {
-//                Column {
-//                    Text("قیمت: ۴۱۹,۹۰۰ تومان", style = MaterialTheme.typography.bodyLarge)
-//                    Text("٪۵۸ تخفیف", color = Color.Red, fontWeight = FontWeight.Bold)
-//                }
-//                Button(
-//                    onClick = { /* افزودن به سبد خرید */ },
-//                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
-//                        backgroundColor = PrimaryColor,
-//                        contentColor = Color.White
-//                    ),
-//                    shape = RoundedCornerShape(8.dp)
-//                ) {
-//                    Text(
-//                        text = "افزودن به سبد خرید",
-//                        color = Color.White
-//                    )
-//                }
-//            }
-//        }
     } else {
         var itemSelected by remember { mutableStateOf(0) }
 
@@ -416,107 +385,54 @@ fun HomePage(homeViewModel: HomeViewModel) {
     val homeState by homeViewModel.homeState.collectAsState()
     val data: HomePageData
 
-    if(homeState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = PrimaryColor)
-            }
+    if (homeState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = PrimaryColor)
         }
-    else if (homeState.homeData != null) {
-            data = homeState.homeData!!
+    } else if (homeState.homeData != null) {
+        data = homeState.homeData!!
 
-            Box(
-                Modifier
+        Box(
+            Modifier
+                .fillMaxSize()
+        ) {
+            LazyColumn(
+                state = homeViewModel.productListState,
+                modifier = Modifier
                     .fillMaxSize()
             ) {
-                LazyColumn(
-                    state = homeViewModel.productListState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    item {
-                        ImageSlider(
-                            images = listOf(
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/afa47bf9e31bbb25d78bf4a7e5b4028759df823e_1744440856.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                ),
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/832f867ccd35f749becea69a10edf5f32d0fe144_1742021801.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                ),
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/7ae7211fd56c0e9436550260f92748ef8200d8ec_1742030472.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                ),
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/8ae2cc7c57f8731c1aa7e7d31ea64c187cb63c9d_1742234352.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                ),
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/75e4dc2851ff84eb0f92dbf526d860e50998bae7_1741018587.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                )
+                item {
+                    ImageSlider(
+                        images = listOf(
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/cc0b184484350b13b34b793be1339d488a8ffa9a_1750078019.jpg?x-oss-process=image/quality,q_95/format,webp"
                             ),
-                            5000,
-                            false
-                        )
-                    }
-
-                    item {
-                        data.result?.trending?.let {
-                            productSliderTrending(
-                                it.title,
-                                it.products,
-                            )
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(24.dp)
-                            )
-                        }
-                    }
-
-                    item {
-                        RandomProducts(
-                            listOf(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/a4f76ea14e13253026ffdbe78c548524a9c87dac_1741782852.gif?x-oss-process=image?x-oss-process=image/format,webp",
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/34c29c4b72b7fb3f3d2ded413f28bd23935df276_1741521446.jpg?x-oss-process=image/quality,q_95/format,webp",
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/67dfc40d15d97cd7bdc9df70f5db436863182e7b_1741766056.jpg?x-oss-process=image/quality,q_95/format,webp",
-                                "https://dkms.digikala.com/static/files/3ea4f643.jpg?x-oss-process=image/format,webp"
-                            )
-                        )
-                    }
-
-                    item {
-                        data.result?.selling_and_sales?.let {
-                            productSliderSellingAndSales(
-                                it.title,
-                                it.products
-                            )
-
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(24.dp)
-                            )
-
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(10.dp)
-                                    .background(LightGrayColor)
-                                    .padding(top = 10.dp, bottom = 30.dp)
-                            )
-                        }
-                    }
-
-                    item {
-                        ImageSlider(
-
-                            images = listOf(
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/3e2b31e7d697aa2724d85e0fc4b758ab702662e8_1742026574.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                )
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/1291440b2c6fdee179ff01d64bafd9b5183db62e_1748860407.gif?x-oss-process=image?x-oss-process=image/format,webp"
                             ),
-                            5000, true
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/be50523e20d11c8b09943e3be172a7c8f0b6c78c_1749629292.jpg?x-oss-process=image/quality,q_95/format,webp"
+                            ),
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/be2f58f5e1d8e49f38a053ead001fb745fe189b9_1750085414.jpg?x-oss-process=image/quality,q_95/format,webp"
+                            ),
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/b970037e9eff15704bdc43b7bcf1cfbbd53e0d60_1749290938.jpg?x-oss-process=image/quality,q_95/format,webp"
+                            )
+                        ),
+                        5000,
+                        false
+                    )
+                }
+
+                item {
+                    data.result?.trending?.let {
+                        productSliderTrending(
+                            it.title,
+                            it.products,
                         )
                         Spacer(
                             modifier = Modifier
@@ -524,9 +440,25 @@ fun HomePage(homeViewModel: HomeViewModel) {
                                 .height(24.dp)
                         )
                     }
+                }
 
-                    item {
-                        RowProductList1(data.result.home_1)
+                item {
+                    RandomProducts(
+                        listOf(
+                            "https://dkstatics-public.digikala.com/digikala-adservice-banners/f70da287099a22737b5f64e61c22b781ff944a7b_1748439804.jpg?x-oss-process=image/quality,q_95/format,webp",
+                            "https://dkstatics-public.digikala.com/digikala-adservice-banners/93fb8ac79eadb3878f703c8e506db69275374b3c_1749648799.jpg?x-oss-process=image/quality,q_95/format,webp",
+                            "https://dkms.digikala.com/static/files/3ea4f643.jpg?x-oss-process=image/format,webp",
+                            "https://dkstatics-public.digikala.com/digikala-adservice-banners/e02d45093f1821d5be48699f5de8da7b22de4b37_1749281511.jpg?x-oss-process=image/quality,q_95/format,webp"
+                        )
+                    )
+                }
+
+                item {
+                    data.result?.selling_and_sales?.let {
+                        productSliderSellingAndSales(
+                            it.title,
+                            it.products
+                        )
 
                         Spacer(
                             modifier = Modifier
@@ -542,81 +474,117 @@ fun HomePage(homeViewModel: HomeViewModel) {
                                 .padding(top = 10.dp, bottom = 30.dp)
                         )
                     }
+                }
 
-                    item {
-                        RowProductList2(data.result.home_2)
+                item {
+                    ImageSlider(
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
-                    }
+                        images = listOf(
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/3e2b31e7d697aa2724d85e0fc4b758ab702662e8_1742026574.jpg?x-oss-process=image/quality,q_95/format,webp"
+                            )
+                        ),
+                        5000, true
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+                }
 
-                    item {
-                        ImageSlider(
+                item {
+                    data?.result?.home_1?.let { RowProductList1(it) }
 
-                            images = listOf(
-                                MainBanner(
-                                    "https://dkstatics-public.digikala.com/digikala-adservice-banners/7b5b9b8e19e407f4df329cef5ef2b35700ce7144_1742027906.jpg?x-oss-process=image/quality,q_95/format,webp"
-                                )
-                            ),
-                            5000, true
-                        )
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
 
-                    item {
-                        RowProductList3(data.result.home_3)
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(LightGrayColor)
+                            .padding(top = 10.dp, bottom = 30.dp)
+                    )
+                }
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
+                item {
+                    data?.result?.home_2?.let { RowProductList2(it) }
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(10.dp)
-                                .background(LightGrayColor)
-                                .padding(top = 10.dp, bottom = 30.dp)
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+                }
 
-                    item {
-                        RowProductList4(data.result.home_4)
+                item {
+                    ImageSlider(
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
+                        images = listOf(
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/7b5b9b8e19e407f4df329cef5ef2b35700ce7144_1742027906.jpg?x-oss-process=image/quality,q_95/format,webp"
+                            )
+                        ),
+                        5000, true
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+                }
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(10.dp)
-                                .background(LightGrayColor)
-                                .padding(top = 10.dp, bottom = 30.dp)
-                        )
-                    }
+                item {
+                    data?.result?.home_3?.let { RowProductList3(it) }
 
-                    item {
-                        RowProductList5(data.result.home_5)
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(LightGrayColor)
+                            .padding(top = 10.dp, bottom = 30.dp)
+                    )
+                }
 
-                    item {
+                item {
+                    data?.result?.home_4?.let { RowProductList4(it) }
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(LightGrayColor)
+                            .padding(top = 10.dp, bottom = 30.dp)
+                    )
+                }
+
+                item {
+                    data?.result?.home_5?.let { RowProductList5(it) }
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+                }
+
+                item {
                     ImageSlider(
 
                         images = listOf(
@@ -631,50 +599,48 @@ fun HomePage(homeViewModel: HomeViewModel) {
                             .fillMaxWidth()
                             .height(24.dp)
                     )
-                        }
+                }
 
-                    item {
-                        RowProductList6(data.result.home_6)
+                item {
+                    data?.result?.home_6?.let { RowProductList6(it) }
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(10.dp)
-                                .background(LightGrayColor)
-                                .padding(top = 10.dp, bottom = 30.dp)
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(LightGrayColor)
+                            .padding(top = 10.dp, bottom = 30.dp)
+                    )
+                }
 
-                    item {
-                        RowProductList7(data.result.home_7)
+                item {
+                    data?.result?.home_7?.let { RowProductList7(it) }
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+                }
 
-                    item {
-                        RowProductList8(data.result.home_8)
+                item {
+                    data?.result?.home_8?.let { RowProductList8(it) }
 
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
                 }
             }
         }
-
-    else if (homeState.error != null) {
+    } else if (homeState.error != null) {
 
     }
 
@@ -1607,6 +1573,9 @@ fun RowProductList8(result: Home8) {
 
 @Composable
 fun ShowMoreSection(itemWidth: Dp, itemHeight: Dp) {
+    val navController = LocalProvider.LocalNavController.current
+    val searchViewModel = LocalProvider.LocalSearchViewModel.current
+
     Card(
         modifier = Modifier
             .width(itemWidth)
@@ -1615,6 +1584,11 @@ fun ShowMoreSection(itemWidth: Dp, itemHeight: Dp) {
         shape = RoundedCornerShape(12.dp),
         backgroundColor = Color.White,
         elevation = 0.dp,
+        onClick = {
+            //TODO
+//            searchViewModel.getSearchData()
+            navController.navigate(Const.SHOW_MORE)
+        }
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -3159,16 +3133,20 @@ fun SearchPage() {
                 is NetworkState.Loading -> {
                     CircularProgressIndicator(color = PrimaryColor)
                 }
+
                 is NetworkState.Success -> {
                     val response = (data.value as NetworkState.Success<SearchData>).data
                     SearchItemDesign(response)
                 }
+
                 is NetworkState.UnSuccess -> {
                     Text("نتیجه‌ای یافت نشد.")
                 }
+
                 is NetworkState.Failure -> {
                     Text("خطا در برقراری ارتباط با سرور.")
                 }
+
                 else -> {
                 }
             }
@@ -3381,6 +3359,165 @@ fun SearchItemDesign(searchData: SearchData) {
                 }
             }
 
+        }
+    }
+}
+
+
+@Preview
+@Composable
+fun ShowMorePage() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(8) {
+                showMoreItem()
+            }
+
+        }
+    }
+}
+
+@Composable
+fun showMoreItem() {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemWidth = screenWidth * 0.45f
+    val itemHeight = screenWidth * 0.73f
+    Card(
+        modifier = Modifier
+            .width(itemWidth)
+            .height(itemHeight)
+            .padding(4.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = 4.dp,
+        onClick = {
+//            id?.let { productViewModel.getProductData(it) }
+//            navController.navigate(Const.PRODUCT_DETAILS)
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(vertical = 6.dp, horizontal = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(R.drawable.mobileicon),
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .size(itemWidth * 0.75f)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                modifier = Modifier
+                    .padding(horizontal = 6.dp),
+                text = "موبایل ابی سامسونگ مدا س 24 اولترا رنگ ابی",
+                textAlign = TextAlign.End,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                maxLines = 2,
+                fontSize = 14.sp,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                modifier = Modifier
+                    .padding(start = 4.dp, end = 4.dp),
+                text = "تنها یک عدد در انبار هست",
+                textAlign = TextAlign.Start,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                color = PrimaryColor,
+                maxLines = 2,
+                fontSize = 14.sp,
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Start)
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Start),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+//                    if (oldPrice != price) {
+//                        discount?.let {
+                    Box(
+                        modifier = Modifier
+                            .background(PrimaryColor, shape = RoundedCornerShape(6.dp))
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                            .align(Alignment.CenterVertically)
+                    ) {
+                        Text(
+                            text = ConvertNumbers.convertToPersianDigits("10" + "%"),
+                            color = Color.White,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 10.sp,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                        )
+                    }
+//                        }
+
+//                        oldPrice?.let {
+                    Text(
+                        modifier = Modifier
+                            .padding(horizontal = 6.dp),
+                        text = ConvertNumbers.convertToPersianDigits(
+                            ConvertNumbers.convertRialToToman("140000000")
+                        ),
+                        fontSize = 14.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            textDecoration = TextDecoration.LineThrough,
+                            color = Color.Gray
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+//                    }
+            }
+            Text(
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(horizontal = 8.dp),
+                text = "${
+                    ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman("1200000000")
+                    )
+                } تومان ",
+                fontSize = 14.sp,
+                fontFamily = MyCustomFont,
+                textAlign = TextAlign.Start,
+                fontWeight = FontWeight.Normal,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            )
         }
     }
 }
