@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
 class SearchDataSourceImp(val apiService: StoreApiService): SearchDataSource {
-    override suspend fun getSearchData(query: String): Flow<SearchData> = flow{
-        val response = apiService.getSearchData(query)
+    override suspend fun getSearchData(query: String, page: Int): Flow<SearchData> = flow{
+        val response = apiService.getSearchData(query, page)
 
         if (!response.isSuccessful) {
             throw Exception("Server returned error: ${response.code()}")

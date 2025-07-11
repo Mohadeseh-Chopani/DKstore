@@ -19,7 +19,7 @@ data class SearchData(
 data class Result(
     val filters: Filters,
     val sort: Sort,
-    val related_search_words: List<String>,
+    val related_search_words: List<String>?,
     val meta: Meta,
     val search_phase: Int,
     val pager: Pager,

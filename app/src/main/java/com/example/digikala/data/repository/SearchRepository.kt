@@ -19,5 +19,6 @@ interface SearchRepository {
     @GET("search/")
     suspend fun getSearchData(
         @Query("q") query: String,
+        @Query("page") page: Int,
     ): Flow<SearchData>
 }
