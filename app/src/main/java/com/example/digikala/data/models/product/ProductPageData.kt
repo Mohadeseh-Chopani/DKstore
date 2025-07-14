@@ -33,7 +33,7 @@ data class Product(
     val category: Category,
     val suggested_percentage: Double,
     val variants: List<Variant>,
-    val review: Review,
+    val review: Review?,
     val pros_and_cons: Any?,
     val breadcrumb: List<Breadcrumb>,
     val videos: List<Video>,

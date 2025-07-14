@@ -221,19 +221,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
             topBar = {
                 val route = currentRoute(navController)
 
-//                if (route == Const.CATEGORIES) {
-//                    TopAppBar(
-//                        title = { Text("صفحه دسته بندی ها") },
-//                        navigationIcon = {
-//                            IconButton(onClick = {
-//                                navController.popBackStack()
-//                            }) {
-//                                Icon(Icons.Default.ArrowBack, contentDescription = "Back Icon")
-//                            }
-//                        }
-//                    )
-//                }
-
                 when (route) {
                     Const.PRODUCT_DETAILS -> {
                         TopAppBar(
@@ -277,9 +264,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                     Const.SEARCH -> {
                         Column {
                             Spacer(modifier = Modifier.height(40.dp))
-                            searchBoxInSearchPage(
-                                onSearchStarted = { }
-                            )
                         }
                     }
 
@@ -290,27 +274,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                         }
                     }
                 }
-//                    CenterAlignedTopAppBar(
-//                        title = {
-//
-//                        }
-//                        title = {
-//                            Text(
-//                                text = "فروشگاه",
-//                                textAlign = TextAlign.Center
-//                            )
-//                        },
-//                        navigationIcon = {
-//                            IconButton(onClick = {
-//                                coroutineScope.launch {
-////                                    drawerState.open()
-//                                }
-//                            }) {
-////                                Icon(Icons.Default.Menu, contentDescription = "Icon drawer", tint = Color.Black)
-//                            }
-//                        },
-//                        modifier = Modifier.background(Color.Red)
-//                    )
             }
         ) { innerPadding ->
             NavHost(
@@ -1071,22 +1034,16 @@ fun ProductItemInHomePage(
 
                     if (oldPrice != price) {
                         discount?.let {
-                            Box(
+                            Text(
+                                text = ConvertNumbers.convertToPersianDigits("${it}٪"),
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium,
+                                fontFamily = MyCustomFont,
+                                fontSize = 13.sp,
                                 modifier = Modifier
-                                    .background(PrimaryColor, shape = RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                                    .align(Alignment.CenterVertically)
-                            ) {
-                                Text(
-                                    text = ConvertNumbers.convertToPersianDigits(it.toString() + "%"),
-                                    color = Color.White,
-                                    fontFamily = MyCustomFont,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 10.sp,
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                )
-                            }
+                                    .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
                         }
 
                         oldPrice?.let {
@@ -2035,7 +1992,7 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
                     .padding(start = 18.dp, end = 5.dp, bottom = 20.dp),
                 horizontalArrangement = Arrangement.Start
             ) {
-                if (productInformation.result.product.review.attributes != null) {
+                if (productInformation.result.product.review?.attributes != null) {
                     items(productInformation.result.product.review.attributes.size) {
                         val data = productInformation.result.product.review.attributes
                         ProductSpecificationsButton(data.get(it).title, data.get(it).values.get(0))
@@ -2840,7 +2797,7 @@ fun AttributesDesign(attributes: DetailSection) {
             textAlign = TextAlign.Right
         )
 
-        attributes.attributes?.forEach { item ->
+        attributes?.attributes?.forEach { item ->
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier
@@ -3611,25 +3568,16 @@ fun showMoreItem(allProducts: ProductsItem) {
 
                     if (allProducts.price.rrp_price != allProducts.price.selling_price) {
                         allProducts.price.discount_percent?.let {
-                            Box(
+                            Text(
+                                text = ConvertNumbers.convertToPersianDigits("${allProducts.price.discount_percent}٪"),
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium,
+                                fontFamily = MyCustomFont,
+                                fontSize = 13.sp,
                                 modifier = Modifier
-                                    .background(PrimaryColor, shape = RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                                    .align(Alignment.CenterVertically)
-                            ) {
-                                Text(
-                                    text = ConvertNumbers.convertToPersianDigits(
-                                        allProducts.price.discount_percent.toString()
-                                                + "%"
-                                    ),
-                                    color = Color.White,
-                                    fontFamily = MyCustomFont,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 10.sp,
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                )
-                            }
+                                    .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
                         }
 
                         allProducts.price.rrp_price?.let {
