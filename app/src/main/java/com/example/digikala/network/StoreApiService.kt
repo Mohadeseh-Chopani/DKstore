@@ -37,5 +37,6 @@ interface StoreApiService {
     @GET("search/")
     suspend fun getSearchData(
         @Query("q") query: String,
+        @Query("page") page: Int,
     ): Response<ResponseBody>
 }
