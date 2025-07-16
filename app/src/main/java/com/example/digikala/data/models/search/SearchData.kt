@@ -4,6 +4,7 @@ import com.example.digikala.data.models.product.Color
 import com.example.digikala.data.models.product.Digiclub
 import com.example.digikala.data.models.product.Digiplus2
 import com.example.digikala.data.models.product.Price2
+import com.example.digikala.data.models.product.Product
 import com.example.digikala.data.models.product.Seller
 import com.example.digikala.data.models.product.ShipmentMethods
 import com.example.digikala.data.models.product.Statistics
@@ -13,20 +14,20 @@ import com.example.digikala.data.models.product.Warranty
 
 data class SearchData(
     val status: Int,
-    val result: Result
+    val result: Result?
 )
 
 data class Result(
-    val filters: Filters,
-    val sort: Sort,
+    val filters: Filters?,
+    val sort: Sort?,
     val related_search_words: List<String>?,
-    val meta: Meta,
-    val search_phase: Int,
-    val pager: Pager,
-    val search_version: String,
-    val text_lenz_eligibility: String,
-    val advertisement: Advertisement,
-    val products: List<ProductsItem>
+    val meta: Meta?,
+    val search_phase: Int?,
+    val pager: Pager?,
+    val search_version: String?,
+    val text_lenz_eligibility: String?,
+    val advertisement: Advertisement?,
+    val products: List<ProductsItem>?
 )
 
 data class Filters(
@@ -221,7 +222,7 @@ data class AdvertisementSponsored_brandsProductsItem(
     val images: AdvertisementSponsored_brandsProductsItemImages,
     val default_variant_id: Int,
     val second_default_variant_id: Int,
-    val parameters: AdvertisementSponsored_brandsProductsItemParameters,
+    val parameters: AdvertisementSponsored_brandsProductsItemParameters?,
     val warehouse_stock: Int?,
     val product_type: String,
     val properties: AdvertisementSponsored_brandsProductsItemProperties,
@@ -430,7 +431,7 @@ data class ProductsItem(
     val images: ProductsItemImages,
     val default_variant_id: Int,
     val second_default_variant_id: Int,
-    val parameters: ProductsItemParameters,
+    val parameters: ProductsItemParameters?,
     val product_type: String,
     val properties: ProductsItemProperties,
     val product_badges: List<ProductsItemProduct_badgesItem>,

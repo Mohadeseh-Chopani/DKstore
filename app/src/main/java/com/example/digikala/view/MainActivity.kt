@@ -242,7 +242,10 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                                 IconButton(onClick = {
                                     navController.popBackStack()
                                 }) {
-                                    Icon(Icons.Default.ArrowForward, contentDescription = "Back Icon")
+                                    Icon(
+                                        Icons.Default.ArrowForward,
+                                        contentDescription = "Back Icon"
+                                    )
                                 }
                             }
                         )
@@ -255,13 +258,16 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                                 IconButton(onClick = {
                                     navController.popBackStack()
                                 }) {
-                                    Icon(Icons.Default.ArrowForward, contentDescription = "Back Icon")
+                                    Icon(
+                                        Icons.Default.ArrowForward,
+                                        contentDescription = "Back Icon"
+                                    )
                                 }
                             }
                         )
                     }
 
-                    Const.SEARCH -> {
+                    "${Const.SEARCH}/{query}" -> {
                         Column {
                             Spacer(modifier = Modifier.height(40.dp))
                         }
@@ -1672,13 +1678,18 @@ fun showMoreAction(title: String, searchViewModel: SearchViewModel) {
 @Composable
 fun searchBox() {
     val navController = LocalProvider.LocalNavController.current
+    val searchViewModel = LocalProvider.LocalSearchViewModel.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .height(50.dp)
             .clickable {
-                navController.navigate(Const.SEARCH)
+                navController.navigate(Const.SEARCH + "/")
+                searchViewModel.isLoading = false
+                searchViewModel.isLastPage = false
+                searchViewModel.currentPage = 1
+                searchViewModel.cachedProducts.clear()
             },
         contentAlignment = Alignment.Center
     ) {
@@ -1811,7 +1822,8 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
 
                 val payloadData = data.result.product.product_badges?.get(currentIndex)?.payload
                 payloadData?.let {
-                    val colorInt = ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
+                    val colorInt =
+                        ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
                     Text(
                         text = payloadData?.text.toString(),
                         fontFamily = MyCustomFont,
@@ -2060,13 +2072,19 @@ fun ProductActionsRow(
 
     commentCount?.takeIf { it > 0 }?.let {
         itemList.add {
-            UserActionButton("${formatNumberToPersian(it.toDouble())} دیدگاه ها", onClick = onItemClick)
+            UserActionButton(
+                "${formatNumberToPersian(it.toDouble())} دیدگاه ها",
+                onClick = onItemClick
+            )
         }
     }
 
     questionCount?.takeIf { it > 0 }?.let {
         itemList.add {
-            UserActionButton("${formatNumberToPersian(it.toDouble())} پرسش و پاسخ", onClick = onItemClick)
+            UserActionButton(
+                "${formatNumberToPersian(it.toDouble())} پرسش و پاسخ",
+                onClick = onItemClick
+            )
         }
     }
 
@@ -2997,7 +3015,11 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                                 fontWeight = FontWeight.Medium
                             )
 
-                            Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null, tint = LightBlue)
+                            Icon(
+                                Icons.Default.KeyboardArrowLeft,
+                                contentDescription = null,
+                                tint = LightBlue
+                            )
                         }
                     }
                     val childrenOfSelectedCategory = currentSelectedMainCategory?.children
@@ -3032,14 +3054,15 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
     var expanded by remember { mutableStateOf(false) }
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "")
 
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-            if (!itemData.children.isNullOrEmpty()) {
-                expanded = !expanded
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (!itemData.children.isNullOrEmpty()) {
+                    expanded = !expanded
+                }
             }
-        }
-        .padding(16.dp)) {
+            .padding(16.dp)) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -3161,17 +3184,17 @@ fun searchBoxInSearchPage(onSearchStarted: () -> Unit) {
     }
 }
 
-@Preview
 @Composable
 fun SearchPage(query: String) {
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
-    val data = searchViewModel.searchData.collectAsState()
+    val data by searchViewModel.searchData.collectAsState()
     var hasSearched by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    val showBottomLoader = remember { mutableStateOf(false) }
 
     val shouldLoadMore by remember {
         derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index?: 0
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val totalItems = listState.layoutInfo.totalItemsCount
             totalItems > 0 && lastVisibleItem >= totalItems - 4
         }
@@ -3183,74 +3206,14 @@ fun SearchPage(query: String) {
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        searchBoxInSearchPage(
-            onSearchStarted = { hasSearched = true }
-        )
 
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-        )
-        if (hasSearched) {
-            when (data.value) {
-                is NetworkState.Loading -> {
-                    CircularProgressIndicator(color = PrimaryColor)
-                }
-
-                is NetworkState.Success -> {
-                    val response = (data.value as NetworkState.Success<SearchData>).data
-                    LazyColumn(
-                        state = listState
-                    ) {
-                        items(response.result.products.size) { index ->
-                            val product = response.result.products.get(index)
-                            SearchItemDesign(product)
-                        }
-                    }
-                }
-
-                is NetworkState.UnSuccess -> {
-                    Text("نتیجه‌ای یافت نشد.")
-                }
-
-                is NetworkState.Failure -> {
-                    Text("خطا در برقراری ارتباط با سرور.")
-                }
-            }
-        }
-    }
-
-
-    val searchViewModel = LocalProvider.LocalSearchViewModel.current
-    val searchData by searchViewModel.searchData.collectAsState()
-    val gridState = rememberLazyGridState()
-
-    val showBottomLoader = remember { mutableStateOf(false) }
-
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisibleItem = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = gridState.layoutInfo.totalItemsCount
-            totalItems > 0 && lastVisibleItem >= totalItems - 4
-        }
-    }
-
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore && !searchViewModel.isLoading && !searchViewModel.isLastPage) {
-            searchViewModel.getSearchData(query)
-        }
-    }
-
-    LaunchedEffect(searchData) {
-        when (searchData) {
+    LaunchedEffect(data) {
+        when (data) {
             is NetworkState.Loading -> {
                 if (searchViewModel.currentPage > 1) {
                     showBottomLoader.value = true
+                } else {
+
                 }
             }
 
@@ -3262,43 +3225,57 @@ fun SearchPage(query: String) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-
-        val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
-            searchViewModel.cachedProducts
-        } else if (searchData is NetworkState.Success) {
-            (searchData as NetworkState.Success<SearchData>).data.result.products
-        } else {
-            emptyList()
-        }
-
-        LazyVerticalGrid(
-            state = gridState,
-            columns = GridCells.Fixed(2),
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            items(products.size) { index ->
-                showMoreItem(products[index])
-            }
+            searchBoxInSearchPage(
+                onSearchStarted = { hasSearched = true }
+            )
 
-            if (showBottomLoader.value) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = PrimaryColor)
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+            )
+
+            val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
+                searchViewModel.cachedProducts
+            } else if (data is NetworkState.Success) {
+                (data as NetworkState.Success<SearchData>).data.result?.products
+            } else {
+                emptyList()
+            }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                products?.size?.let {
+                    items(it) { index ->
+                        val product = products?.get(index)
+                        product?.let { SearchItemDesign(it) }
+                    }
+                }
+
+                if (showBottomLoader.value) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = PrimaryColor)
+                        }
                     }
                 }
             }
         }
 
-        if (searchData is NetworkState.Loading && searchViewModel.currentPage == 1) {
+        if (data is NetworkState.Loading && searchViewModel.currentPage == 1) {
             Box(
                 Modifier
                     .fillMaxSize()
@@ -3309,7 +3286,6 @@ fun SearchPage(query: String) {
             }
         }
     }
-
     LaunchedEffect(Unit) {
         if (searchViewModel.cachedProducts.isEmpty()) {
             searchViewModel.getSearchData(query)
@@ -3435,14 +3411,20 @@ fun SearchItemDesign(product: ProductsItem) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
-                        Text(
-                            text = formatNumberToPersian(product.default_variant?.seller?.stars!!),
-                            fontFamily = MyCustomFont,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(start = 4.dp)
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFC107)
                         )
+                        product.default_variant?.seller?.stars?.let {
+                            Text(
+                                text = formatNumberToPersian(it),
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
                     }
                 }
 
@@ -3555,7 +3537,7 @@ fun ShowMorePage(query: String) {
         val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
             searchViewModel.cachedProducts
         } else if (searchData is NetworkState.Success) {
-            (searchData as NetworkState.Success<SearchData>).data.result.products
+            (searchData as NetworkState.Success<SearchData>).data.result?.products
         } else {
             emptyList()
         }
@@ -3568,8 +3550,10 @@ fun ShowMorePage(query: String) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(products.size) { index ->
-                showMoreItem(products[index])
+            products?.size?.let {
+                items(it) { index ->
+                    showMoreItem(products[index])
+                }
             }
 
             if (showBottomLoader.value) {

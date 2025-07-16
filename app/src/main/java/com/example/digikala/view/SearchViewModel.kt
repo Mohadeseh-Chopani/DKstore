@@ -43,23 +43,27 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp): ViewModel()
                 .collect { response ->
                     if (currentPage == 1) {
                         _searchData.value = NetworkState.Success(response)
-                        cachedProducts.addAll(response.result.products)
+                        response.result?.products?.mapNotNull { it as? ProductsItem }?.let {
+                            cachedProducts.addAll(it)
+                        }
                     } else {
                         val currentProducts =
                             (_searchData.value as? NetworkState.Success)?.data?.result?.products ?: emptyList()
-                        val newProducts = response.result.products
+                        val newProducts = response.result?.products
                         val combinedProducts = currentProducts + newProducts
 
                         val updatedSearchData = response.copy(
-                            result = response.result.copy(products = combinedProducts)
+                            result = response.result?.copy(products = combinedProducts as List<ProductsItem>)
                         )
 
                         _searchData.value = NetworkState.Success(updatedSearchData)
-                        Log.i("MOX", "getSearchData: "+ updatedSearchData.result.products.size)
-                        cachedProducts.addAll(response.result.products)
+                        Log.i("MOX", "getSearchData: "+ updatedSearchData.result?.products?.size)
+                        response.result?.products?.mapNotNull { it as? ProductsItem }?.let {
+                            cachedProducts.addAll(it)
+                        }
                     }
 
-                    if (response.result.products.isEmpty()) {
+                    if (response.result?.products?.isEmpty() == true) {
                         isLastPage = true
                     } else {
                         currentPage++
