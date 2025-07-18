@@ -1,6 +1,6 @@
 package com.example.digikala.data.repository
 
-import com.example.digikala.data.dataSource.SearchDataSourceImp
+import com.example.digikala.data.dataSource.remote.SearchDataSourceImp
 import com.example.digikala.data.models.search.SearchData
 import kotlinx.coroutines.flow.Flow
 

@@ -1,6 +1,6 @@
 package com.example.digikala.data.repository
 
-import com.example.digikala.data.dataSource.ProductDataSourceImp
+import com.example.digikala.data.dataSource.remote.ProductDataSourceImp
 import com.example.digikala.data.models.product.AttributeInformationData
 import com.example.digikala.data.models.product.ProductPageData
 import kotlinx.coroutines.flow.Flow

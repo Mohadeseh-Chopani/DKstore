@@ -5,22 +5,22 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.10.0"
-composeBom = "2024.04.01"
-runtimeAndroid = "1.7.8"
-navigationCompose = "2.8.6"
-navigationRuntimeKtx = "2.8.6"
+lifecycleRuntimeKtx = "2.9.2"
+activityCompose = "1.10.1"
+composeBom = "2025.07.00"
+runtimeAndroid = "1.8.3"
+navigationCompose = "2.9.2"
+navigationRuntimeKtx = "2.9.2"
 picasso = "2.8"
 retrofit = "2.11.0"
 gson = "2.11.0"
 converter-gson = "2.9.0"
 logging-interceptor = "4.9.0"
-lifecycle-livedata = "2.8.7"
-lifecycle-viewmodel = "2.8.7"
+lifecycle-livedata = "2.9.2"
+lifecycle-viewmodel = "2.9.2"
 play-services-location = "21.3.0"
-navigationFragmentKtx = "2.8.6"
-navigationUiKtx = "2.8.6"
+navigationFragmentKtx = "2.9.2"
+navigationUiKtx = "2.9.2"
 rxandroid = "3.0.2"
 rxjava = "3.1.9"
 retroift_rxjava = "3.0.0"
@@ -30,6 +30,7 @@ coil-gif = "2.5.0"
 accompanist-pager = "0.28.0"
 navigation_material = "0.34.0"
 playServicesWallet = "19.4.0"
+roomDatabase = "2.7.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -66,6 +67,11 @@ koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = 
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil-compose" }
 navigation = { group = "com.google.accompanist", name = "accompanist-navigation-material", version.ref = "navigation_material" }
 
+#room database
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomDatabase" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomDatabase" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomDatabase" }
+
 #slider
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist-pager" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist-pager" }
@@ -78,4 +84,3 @@ play-services-wallet = { group = "com.google.android.gms", name = "play-services
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
