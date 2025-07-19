@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.example.digikala.data.models.product.Product
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface Dao {
@@ -14,11 +15,6 @@ interface Dao {
     @Transaction
     @Query("SELECT * FROM USERDB WHERE phoneNumber = :userId")
     suspend fun getUserWithShoppingCart(userId: String): UserWithSoppingCard?
-
-//    @Transaction
-//    @Query("SELECT * FROM shoppingCardDB WHERE userId = :phoneNumber")
-//    suspend fun getProductsList(phoneNumber: String): UserWithSoppingCard?
-
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertUser(user: UserEntity): Long
@@ -32,4 +28,7 @@ interface Dao {
 
     @Query("DELETE FROM shoppingCardDB WHERE productId = :productId")
     suspend fun deleteProductById(productId: Int)
+
+    @Query("SELECT * FROM shoppingCardDB WHERE productId = :id")
+    fun findProductById(id: Long): Flow<ShoppingCardEntity?>
 }

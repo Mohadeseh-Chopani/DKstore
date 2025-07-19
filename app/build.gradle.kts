@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.navigation)
     implementation(libs.room.runtime)
+    implementation(libs.androidx.ui.test.android)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx)
 

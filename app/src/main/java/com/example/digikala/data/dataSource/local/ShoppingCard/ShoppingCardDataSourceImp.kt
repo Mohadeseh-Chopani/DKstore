@@ -5,6 +5,7 @@ import com.example.digikala.data.dataSource.local.ShoppingCardEntity
 import com.example.digikala.data.dataSource.local.UserEntity
 import com.example.digikala.data.dataSource.local.UserWithSoppingCard
 import com.example.digikala.data.models.product.Product
+import kotlinx.coroutines.flow.Flow
 
 class ShoppingCardDataSourceImp(val dao:Dao): ShoppingCardDataSource {
     override suspend fun addProductToCard(product: ShoppingCardEntity) {
@@ -19,7 +20,11 @@ class ShoppingCardDataSourceImp(val dao:Dao): ShoppingCardDataSource {
         return dao.getUserWithShoppingCart(userId)
     }
 
-    override suspend fun addUserToDatabase(user: UserEntity) {
+    override suspend fun addUserToDatabase(user: UserEntity): Long {
         return dao.insertUser(user)
+    }
+
+    override suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?> {
+        return dao.findProductById(productId)
     }
 }
