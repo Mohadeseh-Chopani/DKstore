@@ -1686,10 +1686,6 @@ fun searchBox() {
             .height(50.dp)
             .clickable {
                 navController.navigate(Const.SEARCH + "/")
-                searchViewModel.isLoading = false
-                searchViewModel.isLastPage = false
-                searchViewModel.currentPage = 1
-                searchViewModel.cachedProducts.clear()
             },
         contentAlignment = Alignment.Center
     ) {
@@ -3320,6 +3316,11 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
                 IconButton(
                     onClick = {
                         onSearch(searchText)
+
+                        searchViewModel.isLoading = false
+                        searchViewModel.isLastPage = false
+                        searchViewModel.currentPage = 1
+                        searchViewModel.cachedProducts.clear()
                     },
                     modifier = Modifier
                 ) {
@@ -3559,6 +3560,7 @@ fun ShowMorePage(query: String) {
             if (showBottomLoader.value) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
+
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
