@@ -20,10 +20,6 @@ class ShoppingCardRepositoryImp(val shoppingCardDataSourceImp: ShoppingCardDataS
         return shoppingCardDataSourceImp.getProductsList(userId)
     }
 
-    override suspend fun addUserToDatabase(user: UserEntity): Long {
-        return shoppingCardDataSourceImp.addUserToDatabase(user)
-    }
-
     override suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?> {
         return shoppingCardDataSourceImp.findProductById(productId)
     }

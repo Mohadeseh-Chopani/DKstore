@@ -20,10 +20,6 @@ class ShoppingCardDataSourceImp(val dao:Dao): ShoppingCardDataSource {
         return dao.getUserWithShoppingCart(userId)
     }
 
-    override suspend fun addUserToDatabase(user: UserEntity): Long {
-        return dao.insertUser(user)
-    }
-
     override suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?> {
         return dao.findProductById(productId)
     }
