@@ -3327,164 +3327,166 @@ fun SearchItemDesign(searchData: SearchData) {
     val itemHeight = screenWidth * 0.25f
 
     LazyColumn {
-        items(searchData.result.products.size) { index ->
-            val product = searchData.result.products.get(index)
+        searchData.result.products?.let {
+            items(it.size) { index ->
+                val product = searchData.result.products.get(index)
 
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .height(itemHeight + 40.dp)
-                    .clickable {
-                        productViewModel.getProductData(product.id)
-                        navController.navigate(Const.PRODUCT_DETAILS)
-                    }
-            ) {
-                Row(
+                Card(
+                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .height(itemHeight + 40.dp)
+                        .clickable {
+                            productViewModel.getProductData(product.id)
+                            navController.navigate(Const.PRODUCT_DETAILS)
+                        }
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(itemWidth)
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(product.images.main),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .height(itemHeight)
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp)
-                                .clip(RoundedCornerShape(5.dp))
-                        )
-
-                        product.default_variant?.color?.hex_code?.let {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.padding(top = 8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            color = Color(android.graphics.Color.parseColor(it)),
-
-                                            )
-                                )
-                            }
-                        }
-                    }
-
-                    Column(
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = product.title_fa,
-                            fontFamily = MyCustomFont,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(itemWidth)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
-                                Text(
-                                    text = formatNumberToPersian(product.default_variant?.seller?.stars!!),
-                                    fontFamily = MyCustomFont,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(start = 4.dp)
-                                )
+                            Image(
+                                painter = rememberAsyncImagePainter(product.images.main),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .height(itemHeight)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                            )
+
+                            product.default_variant?.color?.hex_code?.let {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                color = Color(android.graphics.Color.parseColor(it)),
+
+                                                )
+                                    )
+                                }
                             }
                         }
 
-//                        Text(
-//                            text = product.default_variant.variant_badges.payload.text,
-//                            fontFamily = MyCustomFont,
-//                            fontWeight = FontWeight.Normal,
-//                            color = PrimaryColor,
-//                            fontSize = 16.sp
-//                        )
-
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
                         ) {
-                            Column {
-                                if (product.price.rrp_price != null &&
-                                    product.price.rrp_price != product.price.selling_price
-                                ) {
+                            Text(
+                                text = product.title_fa,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
                                     Text(
-                                        text = ConvertNumbers.convertToPersianDigits(
-                                            ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
-                                        ),
+                                        text = formatNumberToPersian(product.default_variant?.seller?.stars!!),
                                         fontFamily = MyCustomFont,
                                         fontWeight = FontWeight.Normal,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            textDecoration = TextDecoration.LineThrough,
-                                            color = Color.Gray
-                                        ),
-                                        fontSize = 14.sp
+                                        fontSize = 14.sp,
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
+                            }
+
+    //                        Text(
+    //                            text = product.default_variant.variant_badges.payload.text,
+    //                            fontFamily = MyCustomFont,
+    //                            fontWeight = FontWeight.Normal,
+    //                            color = PrimaryColor,
+    //                            fontSize = 16.sp
+    //                        )
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    if (product.price.rrp_price != null &&
+                                        product.price.rrp_price != product.price.selling_price
+                                    ) {
+                                        Text(
+                                            text = ConvertNumbers.convertToPersianDigits(
+                                                ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                            ),
+                                            fontFamily = MyCustomFont,
+                                            fontWeight = FontWeight.Normal,
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                textDecoration = TextDecoration.LineThrough,
+                                                color = Color.Gray
+                                            ),
+                                            fontSize = 14.sp
+                                        )
+                                    }
+
+                                    Text(
+                                        text = "${
+                                            ConvertNumbers.convertToPersianDigits(
+                                                ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
+                                            )
+                                        } تومان ",
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 16.sp
                                     )
                                 }
 
-                                Text(
-                                    text = "${
-                                        ConvertNumbers.convertToPersianDigits(
-                                            ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
-                                        )
-                                    } تومان ",
-                                    fontFamily = MyCustomFont,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 16.sp
-                                )
-                            }
-
-                            if (product.price.discount_percent != 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 14.dp, vertical = 4.dp)
-                                        .align(Alignment.CenterVertically)
-                                ) {
-                                    Text(
-                                        text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Medium,
-                                        fontFamily = MyCustomFont,
-                                        textAlign = TextAlign.Center,
-                                        fontSize = 14.sp,
+                                if (product.price.discount_percent != 0) {
+                                    Box(
                                         modifier = Modifier
-                                            .background(
-                                                PrimaryColor,
-                                                shape = RoundedCornerShape(4.dp)
-                                            )
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
+                                            .padding(horizontal = 14.dp, vertical = 4.dp)
+                                            .align(Alignment.CenterVertically)
+                                    ) {
+                                        Text(
+                                            text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Medium,
+                                            fontFamily = MyCustomFont,
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 14.sp,
+                                            modifier = Modifier
+                                                .background(
+                                                    PrimaryColor,
+                                                    shape = RoundedCornerShape(4.dp)
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
+            }
         }
     }
 }
@@ -3546,8 +3548,10 @@ fun ShowMorePage(query: String) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(products.size) { index ->
-                showMoreItem(products[index])
+            products?.size?.let {
+                items(it) { index ->
+                    showMoreItem(products[index])
+                }
             }
 
             if (showBottomLoader.value) {
