@@ -290,9 +290,13 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                         )
                     }
 
-                    Const.SEARCH -> {
+                    "${Const.SEARCH}/{query}" -> {
                         Column {
                             Spacer(modifier = Modifier.height(40.dp))
+
+                            searchBoxInSearchPage(
+//                onSearchStarted = { }
+                            )
                         }
                     }
 
@@ -334,7 +338,13 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 composable(Const.PRODUCT_DETAILS) { ProductDetails() }
                 composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage() }
-                composable(Const.SEARCH) { SearchPage() }
+                composable(
+                    "${Const.SEARCH}/{query}",
+                    arguments = listOf(navArgument("query") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val query = backStackEntry.arguments?.getString("query")
+                    query?.let { SearchPage(it) }
+                }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage() }
 //                composable(Const.PROFILE) { ProfilePage() }
                 composable(Const.PROFILE) { AccountPage() }
@@ -358,8 +368,9 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 
     // You can keep this logic to hide the bar on certain screens
     if (currentRoute(navController) == Const.PRODUCT_DETAILS ||
-        currentRoute(navController) == Const.SEARCH ||
-        currentRoute(navController) == Const.SHOW_MORE
+        currentRoute(navController) == "${Const.SEARCH}/{query}" ||
+        currentRoute(navController) == "${Const.SHOW_MORE}/{query}"||
+        currentRoute(navController) == Const.TECHNICAL_INFORMATION
     ) {
         // Hides the bottom bar on the product details page
         Log.d("MOX", "BottomNavigationBar: " + currentRoute(navController))
@@ -1715,13 +1726,18 @@ fun showMoreAction(title: String, searchViewModel: SearchViewModel) {
 @Composable
 fun searchBox() {
     val navController = LocalProvider.LocalNavController.current
+    val searchViewModel = LocalProvider.LocalSearchViewModel.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .height(50.dp)
             .clickable {
-                navController.navigate(Const.SEARCH)
+                navController.navigate(Const.SEARCH + "/")
+                searchViewModel.isLoading = false
+                searchViewModel.isLastPage = false
+                searchViewModel.currentPage = 1
+                searchViewModel.cachedProducts.clear()
             },
         contentAlignment = Alignment.Center
     ) {
@@ -3219,7 +3235,7 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
 }
 
 @Composable
-fun searchBoxInSearchPage(onSearchStarted: () -> Unit) {
+fun searchBoxInSearchPage() {
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
     val navController = LocalProvider.LocalNavController.current
     val coroutineScope = rememberCoroutineScope()
@@ -3244,7 +3260,7 @@ fun searchBoxInSearchPage(onSearchStarted: () -> Unit) {
             ) {
                 CustomOutlinedTextField { query ->
                     coroutineScope.launch {
-                        onSearchStarted()
+//                        onSearchStarted()
                         searchViewModel.isLoading = false
                         searchViewModel.isLastPage = false
                         searchViewModel.currentPage = 1
@@ -3256,48 +3272,111 @@ fun searchBoxInSearchPage(onSearchStarted: () -> Unit) {
     }
 }
 
-@Preview
 @Composable
-fun SearchPage() {
+fun SearchPage(query: String) {
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
-    val data = searchViewModel.searchData.collectAsState()
+    val data by searchViewModel.searchData.collectAsState()
     var hasSearched by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val showBottomLoader = remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        searchBoxInSearchPage(
-            onSearchStarted = { hasSearched = true }
-        )
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val totalItems = listState.layoutInfo.totalItemsCount
+            totalItems > 0 && lastVisibleItem >= totalItems - 4
+        }
+    }
 
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-        )
-        if (hasSearched) {
-            when (data.value) {
-                is NetworkState.Loading -> {
-                    CircularProgressIndicator(color = PrimaryColor)
-                }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && !searchViewModel.isLoading && !searchViewModel.isLastPage) {
+            searchViewModel.getSearchData(query)
+        }
+    }
 
-                is NetworkState.Success -> {
-                    val response = (data.value as NetworkState.Success<SearchData>).data
-                    SearchItemDesign(response)
-                }
 
-                is NetworkState.UnSuccess -> {
-                    Text("نتیجه‌ای یافت نشد.")
-                }
+    LaunchedEffect(data) {
+        when (data) {
+            is NetworkState.Loading -> {
+                if (searchViewModel.currentPage > 1) {
+                    showBottomLoader.value = true
+                } else {
 
-                is NetworkState.Failure -> {
-                    Text("خطا در برقراری ارتباط با سرور.")
-                }
-
-                else -> {
                 }
             }
+
+            is NetworkState.Success,
+            is NetworkState.Failure,
+            is NetworkState.UnSuccess -> {
+                showBottomLoader.value = false
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+//            searchBoxInSearchPage(
+////                onSearchStarted = { }
+//            )
+
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+            )
+
+            val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
+                searchViewModel.cachedProducts
+            } else if (data is NetworkState.Success) {
+                (data as NetworkState.Success<SearchData>).data.result?.products
+            } else {
+                emptyList()
+            }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                products?.let {
+                    items(it.size) { index ->
+                        val product = it[index]
+                        SearchItemDesign(product)
+                    }
+                }
+
+                if (showBottomLoader.value) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = PrimaryColor)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (data is NetworkState.Loading && searchViewModel.currentPage == 1) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.White.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryColor)
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (searchViewModel.cachedProducts.isEmpty()) {
+            searchViewModel.getSearchData(query)
         }
     }
 }
@@ -3329,6 +3408,11 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
                 IconButton(
                     onClick = {
                         onSearch(searchText)
+
+                        searchViewModel.isLoading = false
+                        searchViewModel.isLastPage = false
+                        searchViewModel.currentPage = 1
+                        searchViewModel.cachedProducts.clear()
                     },
                     modifier = Modifier
                 ) {
@@ -3340,7 +3424,7 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
 }
 
 @Composable
-fun SearchItemDesign(searchData: SearchData) {
+fun SearchItemDesign(product: ProductsItem) {
     val productViewModel = LocalProvider.LocalProductViewModel.current
     val navController = LocalProvider.LocalNavController.current
 
@@ -3348,166 +3432,155 @@ fun SearchItemDesign(searchData: SearchData) {
     val itemWidth = screenWidth * 0.23f
     val itemHeight = screenWidth * 0.25f
 
-    LazyColumn {
-        searchData.result?.products?.let {
-            items(it.size) { index ->
-                val product = searchData.result?.products?.get(index)
-
-                Card(
-                    shape = RoundedCornerShape(8.dp),
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .height(itemHeight + 40.dp)
+            .clickable {
+                productViewModel.getProductData(product.id)
+                navController.navigate(Const.PRODUCT_DETAILS)
+            }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(itemWidth)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(product.images.main),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
+                        .height(itemHeight)
                         .fillMaxWidth()
-                        .padding(8.dp)
-                        .height(itemHeight + 40.dp)
-                        .clickable {
-                            product?.id?.let { id -> productViewModel.getProductData(id) }
-                            navController.navigate(Const.PRODUCT_DETAILS)
-                        }
-                ) {
+                        .padding(horizontal = 8.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                )
+
+                product.default_variant?.color?.hex_code?.let {
                     Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 8.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.width(itemWidth)
-                        ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(product?.images?.main),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .height(itemHeight)
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp)
-                                    .clip(RoundedCornerShape(5.dp))
-                            )
-
-                            product?.default_variant?.color?.hex_code?.let {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(10.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                color = Color(android.graphics.Color.parseColor(it)),
-
-                                                )
-                                    )
-                                }
-                            }
-                        }
-
-                        Column(
+                        Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
-                        ) {
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    color = Color(android.graphics.Color.parseColor(it)),
+
+                                    )
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = product.title_fa,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFC107)
+                        )
+                        product.default_variant?.seller?.stars?.let {
                             Text(
-                                text = product?.title_fa.toString(),
+                                text = formatNumberToPersian(it),
                                 fontFamily = MyCustomFont,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(start = 4.dp)
                             )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
-                                    Text(
-                                        text = formatNumberToPersian(product?.default_variant?.seller?.stars!!),
-                                        fontFamily = MyCustomFont,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 14.sp,
-                                        modifier = Modifier.padding(start = 4.dp)
-                                    )
-                                }
-                            }
-
-    //                        Text(
-    //                            text = product.default_variant.variant_badges.payload.text,
-    //                            fontFamily = MyCustomFont,
-    //                            fontWeight = FontWeight.Normal,
-    //                            color = PrimaryColor,
-    //                            fontSize = 16.sp
-    //                        )
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    if (product?.price?.rrp_price != null &&
-                                        product?.price?.rrp_price != product?.price?.selling_price
-                                    ) {
-                                        Text(
-                                            text = ConvertNumbers.convertToPersianDigits(
-                                                ConvertNumbers.convertRialToToman(product?.price?.rrp_price.toString())
-                                            ),
-                                            fontFamily = MyCustomFont,
-                                            fontWeight = FontWeight.Normal,
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                textDecoration = TextDecoration.LineThrough,
-                                                color = Color.Gray
-                                            ),
-                                            fontSize = 14.sp
-                                        )
-                                    }
-
-                                    Text(
-                                        text = "${
-                                            ConvertNumbers.convertToPersianDigits(
-                                                ConvertNumbers.convertRialToToman(product?.price?.selling_price.toString())
-                                            )
-                                        } تومان ",
-                                        fontFamily = MyCustomFont,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 16.sp
-                                    )
-                                }
-
-                                if (product?.price?.discount_percent != 0) {
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(horizontal = 14.dp, vertical = 4.dp)
-                                            .align(Alignment.CenterVertically)
-                                    ) {
-                                        Text(
-                                            text = ConvertNumbers.convertToPersianDigits("${product?.price?.discount_percent}٪"),
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Medium,
-                                            fontFamily = MyCustomFont,
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 14.sp,
-                                            modifier = Modifier
-                                                .background(
-                                                    PrimaryColor,
-                                                    shape = RoundedCornerShape(4.dp)
-                                                )
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-                            }
                         }
                     }
                 }
 
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        if (product.price.rrp_price != null &&
+                            product.price.rrp_price != product.price.selling_price
+                        ) {
+                            Text(
+                                text = ConvertNumbers.convertToPersianDigits(
+                                    ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                ),
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    textDecoration = TextDecoration.LineThrough,
+                                    color = Color.Gray
+                                ),
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        Text(
+                            text = "${
+                                ConvertNumbers.convertToPersianDigits(
+                                    ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
+                                )
+                            } تومان ",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 16.sp
+                        )
+                    }
+
+                    if (product.price.discount_percent != 0) {
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 14.dp, vertical = 4.dp)
+                                .align(Alignment.CenterVertically)
+                        ) {
+                            Text(
+                                text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium,
+                                fontFamily = MyCustomFont,
+                                textAlign = TextAlign.Center,
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .background(
+                                        PrimaryColor,
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
