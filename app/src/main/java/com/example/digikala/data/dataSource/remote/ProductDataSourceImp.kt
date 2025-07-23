@@ -1,13 +1,10 @@
-package com.example.digikala.data.dataSource
+package com.example.digikala.data.dataSource.remote
 
-import android.util.Log
 import com.example.digikala.data.models.product.AttributeInformationData
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.network.StoreApiService
 import com.example.digikala.utils.ProcessJson
 import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

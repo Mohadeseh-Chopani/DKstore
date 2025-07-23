@@ -1,6 +1,6 @@
 package com.example.digikala.data.repository
 
-import com.example.digikala.data.dataSource.HomePageDataSourceImp
+import com.example.digikala.data.dataSource.remote.HomePageDataSourceImp
 import com.example.digikala.data.models.home.HomePageData
 import kotlinx.coroutines.flow.Flow
 

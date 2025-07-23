@@ -20,8 +20,13 @@ class ConvertNumbers {
         }
 
         fun convertRialToToman(price: String?): String {
-            val tomanPrice = price?.substring(0, price.length -1)?.toInt()
-            return NumberFormat.getNumberInstance(Locale.US).format(tomanPrice)
+            return price?.takeIf { it.length > 1 }?.let {
+                runCatching {
+                    val tomanPrice = it.substring(0, it.length - 1).toInt()
+                    NumberFormat.getNumberInstance(Locale.US).format(tomanPrice)
+                }.getOrElse { "0" }
+            } ?: "0"
         }
+
     }
 }

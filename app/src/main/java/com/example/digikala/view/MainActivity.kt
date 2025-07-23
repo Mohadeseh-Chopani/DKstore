@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -49,6 +50,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import com.google.accompanist.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
@@ -57,11 +60,14 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
@@ -72,6 +78,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -90,6 +97,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -97,11 +106,17 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -109,6 +124,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -121,6 +137,8 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.example.digikala.R
+import com.example.digikala.data.dataSource.local.ShoppingCardEntity
+import com.example.digikala.data.dataSource.local.UserEntity
 import com.example.digikala.data.models.category.CategoriesData
 import com.example.digikala.data.models.category.Children
 import com.example.digikala.data.models.home.Home1
@@ -162,6 +180,7 @@ import com.example.digikala.utils.ConvertNumbers
 import com.example.digikala.utils.LocalProvider
 import com.example.digikala.utils.MyCustomFont
 import com.example.digikala.utils.NetworkState
+import com.example.digikala.utils.RegistrationState
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
@@ -178,6 +197,7 @@ class MainActivity : ComponentActivity() {
     private val productViewModel: ProductViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val searchViewModel: SearchViewModel by viewModel()
+    private val shoppingCardViewModel: ShoppingCardViewModel by viewModel()
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -190,6 +210,7 @@ class MainActivity : ComponentActivity() {
                 LocalProvider.LocalNavController provides navController,
                 LocalProvider.LocalCategoriesViewModel provides categoriesViewModel,
                 LocalProvider.LocalSearchViewModel provides searchViewModel,
+                LocalProvider.LocalShoppingCardViewModel provides shoppingCardViewModel,
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -242,10 +263,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                                 IconButton(onClick = {
                                     navController.popBackStack()
                                 }) {
-                                    Icon(
-                                        Icons.Default.ArrowForward,
-                                        contentDescription = "Back Icon"
-                                    )
+                                    Icon(Icons.Default.ArrowForward, contentDescription = "Back Icon")
                                 }
                             }
                         )
@@ -258,19 +276,29 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                                 IconButton(onClick = {
                                     navController.popBackStack()
                                 }) {
-                                    Icon(
-                                        Icons.Default.ArrowForward,
-                                        contentDescription = "Back Icon"
-                                    )
+                                    Icon(Icons.Default.ArrowForward, contentDescription = "Back Icon")
                                 }
                             }
                         )
                     }
 
-                    "${Const.SEARCH}/{query}" -> {
+                    Const.SEARCH -> {
                         Column {
                             Spacer(modifier = Modifier.height(40.dp))
                         }
+                    }
+
+                    Const.PROFILE -> {
+                        TopAppBar(
+                            title = { Text("") },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    navController.popBackStack()
+                                }) {
+//                                    Icon(Icons.Default.Close, contentDescription = "Close Icon")
+                                }
+                            }
+                        )
                     }
 
                     else -> {
@@ -298,17 +326,10 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 composable(Const.PRODUCT_DETAILS) { ProductDetails() }
                 composable(Const.TECHNICAL_INFORMATION) { AttributeInformationPage() }
                 composable(Const.CATEGORIES) { CategoriesPage() }
-
-                composable(
-                    "${Const.SEARCH}/{query}",
-                    arguments = listOf(navArgument("query") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val query = backStackEntry.arguments?.getString("query")
-                    query?.let { SearchPage(it) }
-                }
-
-                composable(Const.SHOPPING_CART) { ShoppingCartPage(navController) }
-                composable(Const.PROFILE) { ProfilePage(navController) }
+                composable(Const.SEARCH) { SearchPage() }
+                composable(Const.SHOPPING_CART) { ShoppingCartPage() }
+//                composable(Const.PROFILE) { ProfilePage() }
+                composable(Const.PROFILE) { LoginPage() }
             }
         }
     }
@@ -327,11 +348,14 @@ fun currentRoute(navController: NavController): String? {
 @Composable
 fun BottomNavigationBar(navController: NavController, context: Context) {
 
-    if (currentRoute(navController) == Const.PRODUCT_DETAILS) {
-
+    // You can keep this logic to hide the bar on certain screens
+    if (currentRoute(navController) == Const.PRODUCT_DETAILS ||
+        currentRoute(navController) == Const.SEARCH ||
+        currentRoute(navController) == Const.SHOW_MORE
+    ) {
+        // Hides the bottom bar on the product details page
+        Log.d("MOX", "BottomNavigationBar: " + currentRoute(navController))
     } else {
-        var itemSelected by remember { mutableStateOf(0) }
-
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
@@ -339,15 +363,19 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
                 .background(Color.DarkGray)
         )
         NavigationBar(
-            modifier = Modifier
-                .fillMaxWidth(),
-            containerColor = (Color.White)
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = Color.White
         ) {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+
+            Log.i("MOX", "BottomNavigationBar: " + currentDestination)
+
             BottomNavigationItem().bottomNavigationItem(context = context)
                 .forEachIndexed { index, navigationItem ->
 
                     NavigationBarItem(
-                        selected = index == itemSelected,
+                        selected = currentDestination?.hierarchy?.any { it.route == navigationItem.route } == true,
                         label = {
                             Text(navigationItem.label)
                         },
@@ -358,20 +386,14 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            unselectedIconColor = Color.DarkGray, // Icon color when not selected
-                            selectedTextColor = Color.Black, // Label color when selected
-                            unselectedTextColor = Color.DarkGray, // Label color when not selected
-                            indicatorColor = MenuItemColor // Background color of selected item
+                            unselectedIconColor = Color.DarkGray,
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.DarkGray,
+                            indicatorColor = MenuItemColor
                         ),
                         onClick = {
-                            itemSelected = index
-                            navController.navigate(navigationItem.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            Log.e("MOX", "BottomNavigationBar: " + navigationItem.route)
+                            navController.navigate(navigationItem.route)
                         }
                     )
                 }
@@ -1678,14 +1700,13 @@ fun showMoreAction(title: String, searchViewModel: SearchViewModel) {
 @Composable
 fun searchBox() {
     val navController = LocalProvider.LocalNavController.current
-    val searchViewModel = LocalProvider.LocalSearchViewModel.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .height(50.dp)
             .clickable {
-                navController.navigate(Const.SEARCH + "/")
+                navController.navigate(Const.SEARCH)
             },
         contentAlignment = Alignment.Center
     ) {
@@ -1788,8 +1809,17 @@ fun ProductPageDesign(data: ProductPageData) {
 
 @Composable
 fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
+    val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
+    val navController = LocalProvider.LocalNavController.current
+    val isProductInCart by shoppingCardViewModel.isProductInCart.collectAsState()
+    var buttomText = remember { mutableStateOf("افزودن به سبد خرید") }
+    val context = LocalContext.current
 
     var currentIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        shoppingCardViewModel.checkIfProductIsInCart(data.result.product.id)
+    }
 
     data.result?.product?.product_badges?.let {
         LaunchedEffect(Unit) {
@@ -1818,8 +1848,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
 
                 val payloadData = data.result.product.product_badges?.get(currentIndex)?.payload
                 payloadData?.let {
-                    val colorInt =
-                        ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
+                    val colorInt = ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
                     Text(
                         text = payloadData?.text.toString(),
                         fontFamily = MyCustomFont,
@@ -1831,14 +1860,41 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                     )
                 }
 
+                val shoppingCardEntity = ShoppingCardEntity(
+                    productId = data.result.product.id,
+                    products = data.result.product,
+                    userId = "09226237388",
+                    count = 1
+                )
+
+
                 Button(
-                    onClick = { /* TODO: Handle Add to Cart */ },
+                    onClick = {
+                        if (shoppingCardViewModel.isLogin) {
+                            shoppingCardViewModel.addProductToDatabase(shoppingCardEntity)
+                        } else {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("from_menu", "accountPage")
+                            navController.navigate(Const.PROFILE)
+                            {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.height(45.dp)
                 ) {
+                    if (isProductInCart) {
+                        buttomText.value = "اضافه شده به سبد خرید"
+                    } else {
+                        buttomText.value = "افزودن به سبد خرید"
+                    }
                     Text(
-                        text = "افزودن به سبد خرید",
+                        text = buttomText.value,
                         color = Color.White,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Medium
@@ -2068,19 +2124,13 @@ fun ProductActionsRow(
 
     commentCount?.takeIf { it > 0 }?.let {
         itemList.add {
-            UserActionButton(
-                "${formatNumberToPersian(it.toDouble())} دیدگاه ها",
-                onClick = onItemClick
-            )
+            UserActionButton("${formatNumberToPersian(it.toDouble())} دیدگاه ها", onClick = onItemClick)
         }
     }
 
     questionCount?.takeIf { it > 0 }?.let {
         itemList.add {
-            UserActionButton(
-                "${formatNumberToPersian(it.toDouble())} پرسش و پاسخ",
-                onClick = onItemClick
-            )
+            UserActionButton("${formatNumberToPersian(it.toDouble())} پرسش و پاسخ", onClick = onItemClick)
         }
     }
 
@@ -2462,6 +2512,15 @@ fun SimilarProductItemInProductPage(
                         color = ColorUtils.fromInt(
                             android.graphics.Color.parseColor(
                                 badge?.text_color
+                            )
+                        )
+                    )
+
+                    Text(
+                        text = badge?.text ?: "",
+                        color = Color(
+                            android.graphics.Color.parseColor(
+                                badge?.text_color ?: "#000000"
                             )
                         )
                     )
@@ -3011,11 +3070,7 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
                                 fontWeight = FontWeight.Medium
                             )
 
-                            Icon(
-                                Icons.Default.KeyboardArrowLeft,
-                                contentDescription = null,
-                                tint = LightBlue
-                            )
+                            Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null, tint = LightBlue)
                         }
                     }
                     val childrenOfSelectedCategory = currentSelectedMainCategory?.children
@@ -3050,15 +3105,14 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
     var expanded by remember { mutableStateOf(false) }
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "")
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                if (!itemData.children.isNullOrEmpty()) {
-                    expanded = !expanded
-                }
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .clickable {
+            if (!itemData.children.isNullOrEmpty()) {
+                expanded = !expanded
             }
-            .padding(16.dp)) {
+        }
+        .padding(16.dp)) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -3180,111 +3234,48 @@ fun searchBoxInSearchPage(onSearchStarted: () -> Unit) {
     }
 }
 
+@Preview
 @Composable
-fun SearchPage(query: String) {
+fun SearchPage() {
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
-    val data by searchViewModel.searchData.collectAsState()
+    val data = searchViewModel.searchData.collectAsState()
     var hasSearched by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
-    val showBottomLoader = remember { mutableStateOf(false) }
 
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = listState.layoutInfo.totalItemsCount
-            totalItems > 0 && lastVisibleItem >= totalItems - 4
-        }
-    }
-
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore && !searchViewModel.isLoading && !searchViewModel.isLastPage) {
-            searchViewModel.getSearchData(query)
-        }
-    }
-
-
-    LaunchedEffect(data) {
-        when (data) {
-            is NetworkState.Loading -> {
-                if (searchViewModel.currentPage > 1) {
-                    showBottomLoader.value = true
-                } else {
-
-                }
-            }
-
-            is NetworkState.Success,
-            is NetworkState.Failure,
-            is NetworkState.UnSuccess -> {
-                showBottomLoader.value = false
-            }
-        }
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize()
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            searchBoxInSearchPage(
-                onSearchStarted = { hasSearched = true }
-            )
+        searchBoxInSearchPage(
+            onSearchStarted = { hasSearched = true }
+        )
 
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-            )
-
-            val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
-                searchViewModel.cachedProducts
-            } else if (data is NetworkState.Success) {
-                (data as NetworkState.Success<SearchData>).data.result?.products
-            } else {
-                emptyList()
-            }
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                products?.size?.let {
-                    items(it) { index ->
-                        val product = products?.get(index)
-                        product?.let { SearchItemDesign(it) }
-                    }
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+        )
+        if (hasSearched) {
+            when (data.value) {
+                is NetworkState.Loading -> {
+                    CircularProgressIndicator(color = PrimaryColor)
                 }
 
-                if (showBottomLoader.value) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = PrimaryColor)
-                        }
-                    }
+                is NetworkState.Success -> {
+                    val response = (data.value as NetworkState.Success<SearchData>).data
+                    SearchItemDesign(response)
+                }
+
+                is NetworkState.UnSuccess -> {
+                    Text("نتیجه‌ای یافت نشد.")
+                }
+
+                is NetworkState.Failure -> {
+                    Text("خطا در برقراری ارتباط با سرور.")
+                }
+
+                else -> {
                 }
             }
-        }
-
-        if (data is NetworkState.Loading && searchViewModel.currentPage == 1) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = PrimaryColor)
-            }
-        }
-    }
-    LaunchedEffect(Unit) {
-        if (searchViewModel.cachedProducts.isEmpty()) {
-            searchViewModel.getSearchData(query)
         }
     }
 }
@@ -3316,11 +3307,6 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
                 IconButton(
                     onClick = {
                         onSearch(searchText)
-
-                        searchViewModel.isLoading = false
-                        searchViewModel.isLastPage = false
-                        searchViewModel.currentPage = 1
-                        searchViewModel.cachedProducts.clear()
                     },
                     modifier = Modifier
                 ) {
@@ -3332,7 +3318,7 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
 }
 
 @Composable
-fun SearchItemDesign(product: ProductsItem) {
+fun SearchItemDesign(searchData: SearchData) {
     val productViewModel = LocalProvider.LocalProductViewModel.current
     val navController = LocalProvider.LocalNavController.current
 
@@ -3340,156 +3326,165 @@ fun SearchItemDesign(product: ProductsItem) {
     val itemWidth = screenWidth * 0.23f
     val itemHeight = screenWidth * 0.25f
 
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .height(itemHeight + 40.dp)
-            .clickable {
-                productViewModel.getProductData(product.id)
-                navController.navigate(Const.PRODUCT_DETAILS)
-            }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(itemWidth)
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(product.images.main),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .height(itemHeight)
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                )
+    LazyColumn {
+        items(searchData.result.products.size) { index ->
+            val product = searchData.result.products.get(index)
 
-                product.default_variant?.color?.hex_code?.let {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(top = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    color = Color(android.graphics.Color.parseColor(it)),
-
-                                    )
-                        )
-                    }
-                }
-            }
-
-            Column(
+            Card(
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .height(itemHeight + 40.dp)
+                    .clickable {
+                        productViewModel.getProductData(product.id)
+                        navController.navigate(Const.PRODUCT_DETAILS)
+                    }
             ) {
-                Text(
-                    text = product.title_fa,
-                    fontFamily = MyCustomFont,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Star,
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.width(itemWidth)
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(product.images.main),
                             contentDescription = null,
-                            tint = Color(0xFFFFC107)
-                        )
-                        product.default_variant?.seller?.stars?.let {
-                            Text(
-                                text = formatNumberToPersian(it),
-                                fontFamily = MyCustomFont,
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        if (product.price.rrp_price != null &&
-                            product.price.rrp_price != product.price.selling_price
-                        ) {
-                            Text(
-                                text = ConvertNumbers.convertToPersianDigits(
-                                    ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
-                                ),
-                                fontFamily = MyCustomFont,
-                                fontWeight = FontWeight.Normal,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    textDecoration = TextDecoration.LineThrough,
-                                    color = Color.Gray
-                                ),
-                                fontSize = 14.sp
-                            )
-                        }
-
-                        Text(
-                            text = "${
-                                ConvertNumbers.convertToPersianDigits(
-                                    ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
-                                )
-                            } تومان ",
-                            fontFamily = MyCustomFont,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    if (product.price.discount_percent != 0) {
-                        Box(
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .padding(horizontal = 14.dp, vertical = 4.dp)
-                                .align(Alignment.CenterVertically)
+                                .height(itemHeight)
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                        )
+
+                        product.default_variant?.color?.hex_code?.let {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            color = Color(android.graphics.Color.parseColor(it)),
+
+                                            )
+                                )
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = product.title_fa,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium,
-                                fontFamily = MyCustomFont,
-                                textAlign = TextAlign.Center,
-                                fontSize = 14.sp,
-                                modifier = Modifier
-                                    .background(
-                                        PrimaryColor,
-                                        shape = RoundedCornerShape(4.dp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
+                                Text(
+                                    text = formatNumberToPersian(product.default_variant?.seller?.stars!!),
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+                        }
+
+//                        Text(
+//                            text = product.default_variant.variant_badges.payload.text,
+//                            fontFamily = MyCustomFont,
+//                            fontWeight = FontWeight.Normal,
+//                            color = PrimaryColor,
+//                            fontSize = 16.sp
+//                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                if (product.price.rrp_price != null &&
+                                    product.price.rrp_price != product.price.selling_price
+                                ) {
+                                    Text(
+                                        text = ConvertNumbers.convertToPersianDigits(
+                                            ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                        ),
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            textDecoration = TextDecoration.LineThrough,
+                                            color = Color.Gray
+                                        ),
+                                        fontSize = 14.sp
                                     )
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
+                                }
+
+                                Text(
+                                    text = "${
+                                        ConvertNumbers.convertToPersianDigits(
+                                            ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
+                                        )
+                                    } تومان ",
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp
+                                )
+                            }
+
+                            if (product.price.discount_percent != 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                                        .align(Alignment.CenterVertically)
+                                ) {
+                                    Text(
+                                        text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = MyCustomFont,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 14.sp,
+                                        modifier = Modifier
+                                            .background(
+                                                PrimaryColor,
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
+
         }
     }
 }
@@ -3538,7 +3533,7 @@ fun ShowMorePage(query: String) {
         val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
             searchViewModel.cachedProducts
         } else if (searchData is NetworkState.Success) {
-            (searchData as NetworkState.Success<SearchData>).data.result?.products
+            (searchData as NetworkState.Success<SearchData>).data.result.products
         } else {
             emptyList()
         }
@@ -3551,16 +3546,13 @@ fun ShowMorePage(query: String) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            products?.size?.let {
-                items(it) { index ->
-                    showMoreItem(products[index])
-                }
+            items(products.size) { index ->
+                showMoreItem(products[index])
             }
 
             if (showBottomLoader.value) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
-
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
@@ -3713,12 +3705,653 @@ fun showMoreItem(allProducts: ProductsItem) {
 }
 
 
+@Preview
 @Composable
-fun ShoppingCartPage(navController: NavController) {
+fun ShoppingCartPage() {
+//    var totalPrice = remm
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                Text(
+                    text = "سبد خرید شما",
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Right,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(horizontal = 8.dp)
+                )
+
+                Spacer(
+                    Modifier
+                        .height(20.dp)
+                        .fillMaxWidth()
+                )
+
+                LazyColumn {
+                    items(2) {
+                        productItemInshoppingCard()
+                    }
+
+                    item {
+                        finalReceiptBoxInShoppingCard(
+                            2,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+
+            ShoppingCardPageBottomBar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter),
+            )
+
+        }
+    }
 }
 
 @Composable
-fun ProfilePage(navController: NavController) {
+fun finalReceiptBoxInShoppingCard(countProduct: Int, modifier: Modifier) {
+//    var totalPrice = calculateTotalPrice()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        SummaryRow(
+            title = "(${countProduct}) قیمت کالاها",
+            amount = "۱,۹۵۰,۰۰۰ تومان",
+            amountColor = Color.Black
+        )
+
+        SummaryRow(
+            title = "جمع سبد خرید",
+            amount = "۱,۴۳۳,۵۰۰ تومان",
+            amountColor = Color.Black
+        )
+
+        SummaryRow(
+            title = "سود شما از خرید",
+            amount = "۵۲۶,۵۰۰ تومان (۲۷٪)",
+            amountColor = DarkGreen
+        )
+    }
+}
+
+@Composable
+fun SummaryRow(
+    title: String,
+    amount: String,
+    amountColor: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = title,
+            textAlign = TextAlign.Start,
+            fontFamily = MyCustomFont,
+            fontWeight = FontWeight.Normal
+        )
+        Text(
+            text = amount,
+            fontFamily = MyCustomFont,
+            fontWeight = FontWeight.Normal,
+            color = amountColor,
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+
+@Composable
+fun productItemInshoppingCard() {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val itemHeight = screenWidth * 0.74f
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(itemHeight)
+            .padding(vertical = 4.dp)
+    ) {
+        Row(
+            Modifier
+                .padding(8.dp)
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(top = 8.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painterResource(R.drawable.ic_launcher_background),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .padding(horizontal = 8.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                )
+
+                Text(
+                    text = "فروش ویژه",
+                    color = PrimaryColor,
+                    fontSize = 16.sp,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                )
+
+            }
+
+            Column(
+                Modifier
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = "موبایل سامسونگ 24 اولترا ابی رنگ همراه گارانتی",
+                    fontSize = 14.sp,
+                    fontFamily = MyCustomFont,
+                    maxLines = 2,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier
+                        .padding(top = 4.dp, bottom = 4.dp)
+                )
+
+                Row(Modifier.padding(top = 4.dp)) {
+                    Image(
+                        painter = painterResource(R.drawable.guarantee),
+                        contentDescription = null
+                    )
+                    Text(
+                        text = "این محصول دارای گارانتی است",
+                        fontSize = 13.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+
+                Row(Modifier.padding(top = 4.dp)) {
+                    Image(
+                        painter = painterResource(R.drawable.seller),
+                        contentDescription = null
+                    )
+                    Text(
+                        text = "دیجی کالا",
+                        fontSize = 13.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+
+                Row(Modifier.padding(top = 4.dp)) {
+                    Image(
+                        painter = painterResource(R.drawable.delivary_express),
+                        contentDescription = null
+                    )
+                    Text(
+                        text = "ارسال دیجی کالا",
+                        fontSize = 13.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+
+                Row(Modifier.padding(top = 4.dp)) {
+                    Image(
+                        painter = painterResource(R.drawable.delivery_today),
+                        contentDescription = null
+                    )
+                    Text(
+                        text = "ارسال امروز ",
+                        fontSize = 13.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(start = 16.dp, bottom = 16.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+
+            manageBoxCountOfProductInShoppingCard()
+
+            priseSectionInShoppingCard()
+        }
+    }
+}
+
+@Composable
+fun manageBoxCountOfProductInShoppingCard() {
+    Box(
+        modifier = Modifier
+            .border(1.dp, color = Color.LightGray, RoundedCornerShape(5.dp))
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Icon(
+                Icons.Default.Add, tint = PrimaryColor, contentDescription = null,
+                modifier = Modifier
+                    .clickable {
+
+                    }
+                    .padding(6.dp)
+            )
+
+            Text(
+                text = "1",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryColor,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(6.dp)
+            )
+
+            Icon(
+                painterResource(R.drawable.delete), tint = PrimaryColor, contentDescription = null,
+                modifier = Modifier
+                    .clickable {
+
+                    }
+                    .padding(6.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun priseSectionInShoppingCard() {
+    Column {
+
+        Row {
+            Text(
+                text = ConvertNumbers.convertToPersianDigits(
+                    ConvertNumbers.convertRialToToman("10000")
+                ),
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = PrimaryColor,
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 4.dp)
+            )
+
+            Text(
+                text = "تومان تخفیف",
+                fontFamily = MyCustomFont,
+                color = PrimaryColor,
+                fontWeight = FontWeight.Normal,
+                fontSize = 12.sp
+            )
+        }
+
+        Row {
+            Text(
+                text = ConvertNumbers.convertToPersianDigits(
+                    ConvertNumbers.convertRialToToman("12000000")
+                ),
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 4.dp)
+            )
+
+            Text(
+                text = "تومان",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier) {
+
+    var currentIndex by remember { mutableStateOf(0) }
+
+//    data.result?.product?.product_badges?.let {
+//        LaunchedEffect(Unit) {
+//            while (true) {
+//                delay(3000L)
+//                currentIndex = (currentIndex + 1) % (data.result.product.product_badges.size)
+//            }
+//        }
+//    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .border(1.dp, color = LightGrayColor),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Column {
+
+//                val payloadData = data.result.product.product_badges?.get(currentIndex)?.payload
+//                payloadData?.let {
+//                    val colorInt = ColorUtils.fromInt(android.graphics.Color.parseColor(payloadData?.text_color))
+//                    Text(
+//                        text = payloadData?.text.toString(),
+//                        fontFamily = MyCustomFont,
+//                        fontWeight = FontWeight.Normal,
+//                        color = colorInt,
+//                        fontSize = 14.sp,
+//                        modifier = Modifier
+//                            .padding(vertical = 8.dp)
+//                    )
+//                }
+
+                Button(
+                    onClick = { /* TODO: Handle Add to Cart */ },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.height(45.dp)
+                ) {
+                    Text(
+                        text = "ادامه فرایند خرید",
+                        color = Color.White,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Column {
+//                if (data.result.product.price.rrp_price != data.result.product.price.selling_price) {
+                Column(verticalArrangement = Arrangement.Center) {
+//                        Text(
+//                            text = ConvertNumbers.convertToPersianDigits("${data.result.product.price.discount_percent}٪"),
+//                            color = Color.White,
+//                            fontWeight = FontWeight.Medium,
+//                            fontFamily = MyCustomFont,
+//                            fontSize = 13.sp,
+//                            modifier = Modifier
+//                                .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
+//                                .padding(horizontal = 6.dp, vertical = 2.dp)
+//                        )
+//                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "جمع سبد خرید",
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = MyCustomFont,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+//                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+//                    Text(
+//                        text = "${
+//                            ConvertNumbers.convertToPersianDigits(
+//                                ConvertNumbers.convertRialToToman("95739310")
+//                            )
+//                        } تومان ",
+//                        fontWeight = FontWeight.Normal,
+//                        fontFamily = MyCustomFont,
+//                        fontSize = 16.sp,
+//                        color = Color.Black
+//                    )
+//                } else {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${
+                            ConvertNumbers.convertToPersianDigits(
+                                ConvertNumbers.convertRialToToman("95793310")
+                            )
+                        } تومان ",
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = MyCustomFont,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
+//                }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProfilePage() {
+}
+
+@SuppressLint("RememberReturnType")
+private fun isValidPhoneNumber(phone: String): Boolean {
+    return phone.matches(Regex("^09\\d{9}$"))
+}
+
+
+@Preview
+@Composable
+fun LoginPage() {
+    var phoneNumber by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var phoneNumberErrorText by remember { mutableStateOf<String?>(null) }
+    var passwordErrorText by remember { mutableStateOf<String?>(null) }
+    val phoneFocusRequester = remember { FocusRequester() }
+    val passwordFocusRequester = remember { FocusRequester() }
+
+    val context = LocalContext.current
+    val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
+    val registrationState by shoppingCardViewModel.registrationState.collectAsState()
+
+    LaunchedEffect(registrationState) {
+        when (registrationState) {
+            RegistrationState.SUCCESS -> {
+                Toast.makeText(context, "ثبت نام با موفقیت انجام شد", Toast.LENGTH_LONG).show()
+                shoppingCardViewModel.resetRegistrationState()
+            }
+
+            RegistrationState.USER_EXISTS -> {
+                Toast.makeText(context, "با این شماره قبلا ثبت نام کرده‌اید!", Toast.LENGTH_LONG).show()
+                shoppingCardViewModel.resetRegistrationState()
+            }
+
+            else -> {
+                // برای وضعیت‌های IDLE و LOADING کاری انجام نمی‌دهیم
+            }
+        }
+    }
+
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+
+        Image(
+            painter = painterResource(id = R.drawable.login_logo),
+            contentDescription = "Digikala Logo",
+            modifier = Modifier
+                .height(64.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "برای ورود و یا ثبت‌نام در دیجی‌کالا شماره موبایل خود را وارد نمایید",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = phoneNumber,
+            onValueChange = {
+                phoneNumber = it
+                phoneNumberErrorText = null
+            },
+            label = { Text("شماره موبایل") },
+            placeholder = { Text("مثلاً 09123456789", color = Color.Gray) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(phoneFocusRequester),
+            isError = phoneNumberErrorText != null,
+            singleLine = true
+        )
+        phoneNumberErrorText?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 4.dp)
+                    .fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = {
+                password = it
+                passwordErrorText = null
+            },
+            label = { Text("رمز عبور") },
+            placeholder = { Text("رمز عبور خود را وارد کنید", color = Color.Gray) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Default.Star else Icons.Default.Search,
+                        contentDescription = if (passwordVisible) "مخفی کردن رمز" else "نمایش رمز"
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(passwordFocusRequester),
+            isError = passwordErrorText != null,
+            singleLine = true
+        )
+        passwordErrorText?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 4.dp)
+                    .fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                if (phoneNumber.isBlank()) {
+                    phoneNumberErrorText = "شماره موبایل نمی‌تواند خالی باشد"
+                } else if (!isValidPhoneNumber(phoneNumber)) {
+                    phoneNumberErrorText = "فرمت شماره موبایل صحیح نیست (مثلاً 09123456789)"
+                } else {
+                    phoneNumberErrorText = null
+                }
+
+                if (password.isBlank()) {
+                    passwordErrorText = "رمز عبور نمی‌تواند خالی باشد"
+                } else {
+                    passwordErrorText = null
+                }
+
+                when {
+                    phoneNumberErrorText != null -> {
+                        phoneFocusRequester.requestFocus()
+                        Toast.makeText(context, phoneNumberErrorText, Toast.LENGTH_SHORT).show()
+                    }
+
+                    passwordErrorText != null -> {
+                        passwordFocusRequester.requestFocus()
+                        Toast.makeText(context, passwordErrorText, Toast.LENGTH_SHORT).show()
+                    }
+
+                    else -> {
+                        val user = UserEntity(phoneNumber, password)
+                        shoppingCardViewModel.addUserToDatabase(user)
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor)
+        ) {
+            Text("ورود به دیجی‌کالا", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "ورود شما به معنای پذیرش شرایط دیجی‌کالا و قوانین حریم‌خصوصی است",
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterialNavigationApi::class)

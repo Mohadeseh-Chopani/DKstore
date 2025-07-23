@@ -1,4 +1,4 @@
-package com.example.digikala.data.dataSource
+package com.example.digikala.data.dataSource.remote
 
 import com.example.digikala.data.models.search.SearchData
 import com.example.digikala.network.StoreApiService

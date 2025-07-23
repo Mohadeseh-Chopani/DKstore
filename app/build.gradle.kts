@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -39,6 +40,11 @@ android {
     }
 }
 
+configurations.all {
+    exclude(group = "com.intellij", module = "annotations")
+}
+
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -71,6 +77,10 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
     implementation(libs.navigation)
+    implementation(libs.room.runtime)
+    implementation(libs.androidx.ui.test.android)
+    kapt(libs.room.compiler)
+    implementation(libs.room.ktx)
 
 //    slider
     implementation(libs.accompanist.pager)
