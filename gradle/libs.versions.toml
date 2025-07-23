@@ -32,6 +32,9 @@ navigation_material = "0.34.0"
 playServicesWallet = "19.4.0"
 roomDatabase = "2.7.2"
 uiTestAndroid = "1.8.3"
+datastoreCoreAndroid = "1.1.7"
+datastoreCoreJvm = "1.1.7"
+datastorePreferences = "1.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -81,6 +84,11 @@ accompanist-pager-indicators = { group = "com.google.accompanist", name = "accom
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil-gif" }
 play-services-wallet = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "playServicesWallet" }
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
+
+#datastor
+androidx-datastore-core-android = { group = "androidx.datastore", name = "datastore-core-android", version.ref = "datastoreCoreAndroid" }
+androidx-datastore-core-jvm = { group = "androidx.datastore", name = "datastore-core-jvm", version.ref = "datastoreCoreJvm" }
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

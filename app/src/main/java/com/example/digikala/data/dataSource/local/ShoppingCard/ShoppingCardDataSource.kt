@@ -13,7 +13,5 @@ interface ShoppingCardDataSource {
 
     suspend fun getProductsList(userId: String): UserWithSoppingCard?
 
-    suspend fun addUserToDatabase(user: UserEntity): Long
-
     suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?>
 }

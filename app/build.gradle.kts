@@ -79,6 +79,9 @@ dependencies {
     implementation(libs.navigation)
     implementation(libs.room.runtime)
     implementation(libs.androidx.ui.test.android)
+    implementation(libs.androidx.datastore.core.android)
+//    implementation(libs.androidx.datastore.core.jvm)
+    implementation(libs.datastore.preferences)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx)
 

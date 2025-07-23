@@ -5,6 +5,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.digikala.view.CategoriesViewModel
 import com.example.digikala.view.ProductViewModel
+import com.example.digikala.view.ProfileViewModel
 import com.example.digikala.view.SearchViewModel
 import com.example.digikala.view.ShoppingCardViewModel
 
@@ -25,6 +26,10 @@ object LocalProvider {
     }
 
     val LocalShoppingCardViewModel = staticCompositionLocalOf<ShoppingCardViewModel> {
-        error("SearchViewModel not provided")
+        error("ShoppingCardViewModel not provided")
+    }
+
+    val LocalProfileViewModel = staticCompositionLocalOf<ProfileViewModel> {
+        error("ProfileViewModel not provided")
     }
 }

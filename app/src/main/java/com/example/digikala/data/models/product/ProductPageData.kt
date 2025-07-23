@@ -41,6 +41,12 @@ data class Product(
     val questions: Questions?,
     val meta: Meta,
     val st_cmp_tacker: StCmpTacker,
+    val colorList: colorList
+)
+
+data class colorList(
+    val title: String,
+    val color: String
 )
 
 data class Recommendation(

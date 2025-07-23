@@ -22,6 +22,11 @@ interface Dao {
     @Query("DELETE FROM USERDB WHERE phoneNumber = :userId")
     suspend fun deleteUserById(userId: Long)
 
+    @Query("DELETE FROM USERDB ")
+    suspend fun deleteAllUser()
+
+    @Query("SELECT * FROM USERDB WHERE phoneNumber = :userId")
+    fun getUserById(userId: String): Flow<UserEntity?>
 
     @Insert
     suspend fun insertProduct(products: ShoppingCardEntity)
@@ -31,4 +36,7 @@ interface Dao {
 
     @Query("SELECT * FROM shoppingCardDB WHERE productId = :id")
     fun findProductById(id: Long): Flow<ShoppingCardEntity?>
+
+    @Query("SELECT phoneNumber FROM USERDB ")
+    fun getUserId(): Flow<String>
 }

@@ -21,12 +21,6 @@ class ShoppingCardViewModel(val shoppingCardRepositoryImp: ShoppingCardRepositor
         isLogin = login
     }
 
-    private val _userCart = MutableStateFlow<UserWithSoppingCard?>(null)
-    val userCart = _userCart.asStateFlow()
-
-    private val _registrationState = MutableStateFlow<RegistrationState>(RegistrationState.IDLE)
-    val registrationState = _registrationState.asStateFlow()
-
 
     private val _isProductInCart = MutableStateFlow(false)
     val isProductInCart: StateFlow<Boolean> = _isProductInCart
@@ -40,38 +34,13 @@ class ShoppingCardViewModel(val shoppingCardRepositoryImp: ShoppingCardRepositor
     fun addProductToDatabase(product: ShoppingCardEntity) {
         viewModelScope.launch {
 
-            shoppingCardRepositoryImp.addUserToDatabase(user)
+//            shoppingCardRepositoryImp.addUserToDatabase(user)
 
             shoppingCardRepositoryImp.addProductToCard(product)
         }
     }
 
-    fun addUserToDatabase(user: UserEntity) {
 
-        viewModelScope.launch {
-            _registrationState.value = RegistrationState.LOADING
-
-            try {
-                val rowId = shoppingCardRepositoryImp.addUserToDatabase(user)
-
-                if (rowId > 0) {
-                    _registrationState.value = RegistrationState.SUCCESS
-                } else {
-                    _registrationState.value = RegistrationState.FAILURE
-                }
-
-            } catch (e: SQLiteConstraintException) {
-                _registrationState.value = RegistrationState.USER_EXISTS
-
-            } catch (e: Exception) {
-                _registrationState.value = RegistrationState.FAILURE
-            }
-        }
-    }
-
-    fun resetRegistrationState() {
-        _registrationState.value = RegistrationState.IDLE
-    }
 
 
     fun checkIfProductIsInCart(productId: Long) {

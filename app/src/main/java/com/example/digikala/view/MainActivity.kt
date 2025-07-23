@@ -2,6 +2,7 @@
 
 package com.example.digikala.view
 
+import SessionManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -57,6 +58,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Surface
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
@@ -65,10 +67,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -159,6 +164,7 @@ import com.example.digikala.data.models.product.LatestComment
 import com.example.digikala.data.models.product.LatestQuestion
 import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
+import com.example.digikala.data.models.product.colorList
 import com.example.digikala.data.models.search.ProductsItem
 import com.example.digikala.data.models.search.SearchData
 import com.example.digikala.databinding.ProductInfoSectionBinding
@@ -198,6 +204,7 @@ class MainActivity : ComponentActivity() {
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val searchViewModel: SearchViewModel by viewModel()
     private val shoppingCardViewModel: ShoppingCardViewModel by viewModel()
+    private val profileViewModel: ProfileViewModel by viewModel()
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -211,6 +218,7 @@ class MainActivity : ComponentActivity() {
                 LocalProvider.LocalCategoriesViewModel provides categoriesViewModel,
                 LocalProvider.LocalSearchViewModel provides searchViewModel,
                 LocalProvider.LocalShoppingCardViewModel provides shoppingCardViewModel,
+                LocalProvider.LocalProfileViewModel provides profileViewModel
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -329,7 +337,7 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 composable(Const.SEARCH) { SearchPage() }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage() }
 //                composable(Const.PROFILE) { ProfilePage() }
-                composable(Const.PROFILE) { LoginPage() }
+                composable(Const.PROFILE) { AccountPage() }
             }
         }
     }
@@ -407,6 +415,13 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 fun HomePage(homeViewModel: HomeViewModel) {
     val scrollState = rememberScrollState()
     val homeState by homeViewModel.homeState.collectAsState()
+    val profileViewModel = LocalProvider.LocalProfileViewModel.current
+    val context = LocalContext.current
+
+    //check status of user's login
+//    profileViewModel.loadUser(profileViewModel.getUserId())
+//    Log.i("MOX", "HomePage: "+ profileViewModel.getUserId())
+
     val data: HomePageData
 
     if (homeState.isLoading) {
@@ -2200,10 +2215,12 @@ fun ProductColorList(colorData: ProductPageData) {
 
     val variants = colorData.result.product.variants
 
-    val filteredVariants = variants.filter {
-        it.color.title_fa != lastColor.value
-    }
+    val filteredVariants = variants
+        .filter { it.color.title_fa != lastColor.value }
+        .distinctBy { it.color.title_fa }
 
+
+    Log.d("MOX", "ProductColorList: "+ filteredVariants.size)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2657,6 +2674,11 @@ fun ProductDetailsScreen(questionAndCommentData: ProductPageData) {
                     }
                 }
             }
+
+            Spacer(
+                Modifier
+                    .fillMaxWidth()
+                    .height(40.dp))
         }
     }
 }
@@ -4172,7 +4194,146 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun AccountPage() {
+    val profileViewModel = LocalProvider.LocalProfileViewModel.current
+
+    val isLoggedIn by profileViewModel.isUserLoggedIn.collectAsState()
+
+    when (isLoggedIn) {
+        null -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        true -> {
+            ProfilePage()
+        }
+        false -> {
+            LoginPage()
+        }
+    }
+}
+
+@Composable
 fun ProfilePage() {
+//    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            // ستون اصلی برای چیدمان عمودی کل صفحه
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 32.dp)
+            ) {
+                // --- بخش هدر (عنوان و آیکون‌ها) ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // آیکون‌ها
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        IconButton(onClick = { /* TODO: Handle edit click */ }) {
+                            Icon(Icons.Default.Edit, contentDescription = "ویرایش")
+                        }
+                        IconButton(onClick = { /* TODO: Handle cart click */ }) {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = "سبد خرید")
+                        }
+                        IconButton(onClick = { /* TODO: Handle logout click */ }) {
+                            Icon(Icons.Default.Lock, contentDescription = "خروج")
+                        }
+                    }
+
+                    // عنوان
+                    Text(
+                        text = "پروفایل شما :",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // --- بخش اطلاعات کاربری ---
+
+                // آیتم: نام و نام خانوادگی
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "نام و نام خانوادگی",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Right
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(24.dp)) // فضای خالی به جای مقدار
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color.LightGray, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // آیتم: شماره موبایل
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "شماره موبایل",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Right
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "۰۹۱۲۳۵۴۸۶۵۸",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 16.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Right
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color.LightGray, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // آیتم: رمز عبور
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "رمز عبور",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Right
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "وارد نشده است.",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 16.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Right
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color.LightGray, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // آیتم: کدملی
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "کدملی",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Right
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // این آیتم مقدار و خط جداکننده ندارد
+                }
+            }
+        }
+//    }
 }
 
 @SuppressLint("RememberReturnType")
@@ -4191,21 +4352,22 @@ fun LoginPage() {
     var passwordErrorText by remember { mutableStateOf<String?>(null) }
     val phoneFocusRequester = remember { FocusRequester() }
     val passwordFocusRequester = remember { FocusRequester() }
-
+    val profileViewModel = LocalProvider.LocalProfileViewModel.current
     val context = LocalContext.current
     val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
-    val registrationState by shoppingCardViewModel.registrationState.collectAsState()
+    val registrationState by profileViewModel.registrationState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(registrationState) {
         when (registrationState) {
             RegistrationState.SUCCESS -> {
                 Toast.makeText(context, "ثبت نام با موفقیت انجام شد", Toast.LENGTH_LONG).show()
-                shoppingCardViewModel.resetRegistrationState()
+                profileViewModel.resetRegistrationState()
             }
 
             RegistrationState.USER_EXISTS -> {
                 Toast.makeText(context, "با این شماره قبلا ثبت نام کرده‌اید!", Toast.LENGTH_LONG).show()
-                shoppingCardViewModel.resetRegistrationState()
+                profileViewModel.resetRegistrationState()
             }
 
             else -> {
@@ -4335,7 +4497,7 @@ fun LoginPage() {
 
                     else -> {
                         val user = UserEntity(phoneNumber, password)
-                        shoppingCardViewModel.addUserToDatabase(user)
+                        profileViewModel.addUserToDatabase(user)
                     }
                 }
             },

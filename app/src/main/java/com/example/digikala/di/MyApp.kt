@@ -1,9 +1,11 @@
 package com.example.digikala.di
 
+import SessionManager
 import android.app.Application
 import androidx.room.Room
 import com.example.digikala.data.dataSource.local.AppDatabase
 import com.example.digikala.data.dataSource.local.Dao
+import com.example.digikala.data.dataSource.local.ShoppingCard.ProfileDataSourceImp
 import com.example.digikala.data.dataSource.local.ShoppingCard.ShoppingCardDataSourceImp
 import com.example.digikala.data.dataSource.remote.CategoriesDataSourceImp
 import com.example.digikala.data.dataSource.remote.HomePageDataSourceImp
@@ -12,12 +14,14 @@ import com.example.digikala.data.dataSource.remote.SearchDataSourceImp
 import com.example.digikala.data.repository.CategoriesRepositoryImp
 import com.example.digikala.data.repository.HomeRepositoryImp
 import com.example.digikala.data.repository.ProductRepositoryImp
+import com.example.digikala.data.repository.ProfileRepositoryImp
 import com.example.digikala.data.repository.SearchRepositoryImp
 import com.example.digikala.data.repository.ShoppingCardRepositoryImp
 import com.example.digikala.network.StoreApiProvider
 import com.example.digikala.view.CategoriesViewModel
 import com.example.digikala.view.HomeViewModel
 import com.example.digikala.view.ProductViewModel
+import com.example.digikala.view.ProfileViewModel
 import com.example.digikala.view.SearchViewModel
 import com.example.digikala.view.ShoppingCardViewModel
 import org.koin.android.ext.koin.androidContext
@@ -38,7 +42,6 @@ class MyApp: Application() {
 
             singleOf(AppDatabase::getDatabase)
             singleOf(AppDatabase::appDao)
-
 
             //home page
             factoryOf(::HomePageDataSourceImp)
@@ -64,6 +67,13 @@ class MyApp: Application() {
             factoryOf(::ShoppingCardDataSourceImp)
             factoryOf(::ShoppingCardRepositoryImp)
             viewModelOf(::ShoppingCardViewModel)
+
+            singleOf(::SessionManager)
+
+            //profile page
+            factoryOf(::ProfileDataSourceImp)
+            factoryOf(::ProfileRepositoryImp)
+            viewModelOf(::ProfileViewModel)
 
         }
 
