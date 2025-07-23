@@ -14,7 +14,7 @@ import com.example.digikala.data.models.product.Warranty
 
 data class SearchData(
     val status: Int,
-    val result: Result
+    val result: Result?
 )
 
 data class Result(

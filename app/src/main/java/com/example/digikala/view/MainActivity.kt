@@ -3349,9 +3349,9 @@ fun SearchItemDesign(searchData: SearchData) {
     val itemHeight = screenWidth * 0.25f
 
     LazyColumn {
-        searchData.result.products?.let {
+        searchData.result?.products?.let {
             items(it.size) { index ->
-                val product = searchData.result.products.get(index)
+                val product = searchData.result?.products?.get(index)
 
                 Card(
                     shape = RoundedCornerShape(8.dp),
@@ -3360,7 +3360,7 @@ fun SearchItemDesign(searchData: SearchData) {
                         .padding(8.dp)
                         .height(itemHeight + 40.dp)
                         .clickable {
-                            productViewModel.getProductData(product.id)
+                            product?.id?.let { id -> productViewModel.getProductData(id) }
                             navController.navigate(Const.PRODUCT_DETAILS)
                         }
                 ) {
@@ -3375,7 +3375,7 @@ fun SearchItemDesign(searchData: SearchData) {
                             modifier = Modifier.width(itemWidth)
                         ) {
                             Image(
-                                painter = rememberAsyncImagePainter(product.images.main),
+                                painter = rememberAsyncImagePainter(product?.images?.main),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -3385,7 +3385,7 @@ fun SearchItemDesign(searchData: SearchData) {
                                     .clip(RoundedCornerShape(5.dp))
                             )
 
-                            product.default_variant?.color?.hex_code?.let {
+                            product?.default_variant?.color?.hex_code?.let {
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     modifier = Modifier.padding(top = 8.dp)
@@ -3410,7 +3410,7 @@ fun SearchItemDesign(searchData: SearchData) {
                                 .padding(horizontal = 8.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = product.title_fa,
+                                text = product?.title_fa.toString(),
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 2,
@@ -3427,7 +3427,7 @@ fun SearchItemDesign(searchData: SearchData) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
                                     Text(
-                                        text = formatNumberToPersian(product.default_variant?.seller?.stars!!),
+                                        text = formatNumberToPersian(product?.default_variant?.seller?.stars!!),
                                         fontFamily = MyCustomFont,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 14.sp,
@@ -3452,12 +3452,12 @@ fun SearchItemDesign(searchData: SearchData) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    if (product.price.rrp_price != null &&
-                                        product.price.rrp_price != product.price.selling_price
+                                    if (product?.price?.rrp_price != null &&
+                                        product?.price?.rrp_price != product?.price?.selling_price
                                     ) {
                                         Text(
                                             text = ConvertNumbers.convertToPersianDigits(
-                                                ConvertNumbers.convertRialToToman(product.price.rrp_price.toString())
+                                                ConvertNumbers.convertRialToToman(product?.price?.rrp_price.toString())
                                             ),
                                             fontFamily = MyCustomFont,
                                             fontWeight = FontWeight.Normal,
@@ -3472,7 +3472,7 @@ fun SearchItemDesign(searchData: SearchData) {
                                     Text(
                                         text = "${
                                             ConvertNumbers.convertToPersianDigits(
-                                                ConvertNumbers.convertRialToToman(product.price.selling_price.toString())
+                                                ConvertNumbers.convertRialToToman(product?.price?.selling_price.toString())
                                             )
                                         } تومان ",
                                         fontFamily = MyCustomFont,
@@ -3481,14 +3481,14 @@ fun SearchItemDesign(searchData: SearchData) {
                                     )
                                 }
 
-                                if (product.price.discount_percent != 0) {
+                                if (product?.price?.discount_percent != 0) {
                                     Box(
                                         modifier = Modifier
                                             .padding(horizontal = 14.dp, vertical = 4.dp)
                                             .align(Alignment.CenterVertically)
                                     ) {
                                         Text(
-                                            text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
+                                            text = ConvertNumbers.convertToPersianDigits("${product?.price?.discount_percent}٪"),
                                             color = Color.White,
                                             fontWeight = FontWeight.Medium,
                                             fontFamily = MyCustomFont,
@@ -3557,7 +3557,7 @@ fun ShowMorePage(query: String) {
         val products = if (searchViewModel.cachedProducts.isNotEmpty()) {
             searchViewModel.cachedProducts
         } else if (searchData is NetworkState.Success) {
-            (searchData as NetworkState.Success<SearchData>).data.result.products
+            (searchData as NetworkState.Success<SearchData>).data.result?.products
         } else {
             emptyList()
         }
