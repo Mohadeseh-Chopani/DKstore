@@ -12,7 +12,7 @@ class ShoppingCardRepositoryImp(val shoppingCardDataSourceImp: ShoppingCardDataS
         return shoppingCardDataSourceImp.addProductToCard(product)
     }
 
-    override suspend fun deleteProductById(productId: Int) {
+    override suspend fun deleteProductById(productId: Long) {
         return shoppingCardDataSourceImp.deleteProductById(productId)
     }
 
@@ -22,5 +22,9 @@ class ShoppingCardRepositoryImp(val shoppingCardDataSourceImp: ShoppingCardDataS
 
     override suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?> {
         return shoppingCardDataSourceImp.findProductById(productId)
+    }
+
+    override suspend fun updateProductCount(productId: Long, newCount: Int) {
+        return shoppingCardDataSourceImp.updateProductCount(productId, newCount)
     }
 }

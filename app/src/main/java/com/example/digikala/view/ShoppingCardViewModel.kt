@@ -50,6 +50,18 @@ class ShoppingCardViewModel(
         }
     }
 
+    fun deleteProductById(productId: Long) {
+        viewModelScope.launch {
+            shoppingCardRepositoryImp.deleteProductById(productId)
+        }
+    }
+
+
+    fun updateProductCount(productId: Long, newCount: Int){
+        viewModelScope.launch {
+            shoppingCardRepositoryImp.updateProductCount(productId, newCount)
+        }
+    }
 
     // این StateFlow همیشه سبد خرید کاربر لاگین‌کرده را نمایش می‌دهد
     val shoppingCartItems: StateFlow<List<ShoppingCardEntity>> =

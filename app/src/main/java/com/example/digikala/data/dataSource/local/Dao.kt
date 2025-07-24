@@ -6,7 +6,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import com.example.digikala.data.models.product.Product
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -32,7 +31,10 @@ interface Dao {
     suspend fun insertProduct(products: ShoppingCardEntity)
 
     @Query("DELETE FROM shoppingCardDB WHERE productId = :productId")
-    suspend fun deleteProductById(productId: Int)
+    suspend fun deleteProductById(productId: Long)
+
+    @Query("UPDATE shoppingCardDB SET count = :newCount WHERE productId = :productId")
+    suspend fun updateProductCount(productId: Long, newCount: Int)
 
     @Query("SELECT * FROM shoppingCardDB WHERE productId = :id")
     fun findProductById(id: Long): Flow<ShoppingCardEntity?>

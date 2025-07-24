@@ -12,7 +12,7 @@ class ShoppingCardDataSourceImp(val dao:Dao): ShoppingCardDataSource {
         return dao.insertProduct(product)
     }
 
-    override suspend fun deleteProductById(productId: Int) {
+    override suspend fun deleteProductById(productId: Long) {
         return dao.deleteProductById(productId)
     }
 
@@ -22,5 +22,9 @@ class ShoppingCardDataSourceImp(val dao:Dao): ShoppingCardDataSource {
 
     override suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?> {
         return dao.findProductById(productId)
+    }
+
+    override suspend fun updateProductCount(productId: Long, newCount: Int) {
+        return dao.updateProductCount(productId, newCount)
     }
 }

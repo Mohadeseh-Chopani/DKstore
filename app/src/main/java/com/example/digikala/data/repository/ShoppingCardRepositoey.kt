@@ -9,9 +9,12 @@ import kotlinx.coroutines.flow.Flow
 interface ShoppingCardRepository {
     suspend fun addProductToCard(product: ShoppingCardEntity)
 
-    suspend fun deleteProductById(productId: Int)
+    suspend fun deleteProductById(productId: Long)
 
     fun getProductsList(userId: String): Flow<List<ShoppingCardEntity>>
 
     suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?>
+
+    suspend fun updateProductCount(productId: Long, newCount: Int)
+
 }

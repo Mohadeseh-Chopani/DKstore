@@ -3899,9 +3899,11 @@ fun finalReceiptBoxInShoppingCard(countProduct: Int, data: List<ShoppingCardEnti
         if (totalPrice.toInt() != 0) {
             SummaryRow(
                 title = "(${ConvertNumbers.convertToPersianDigits(data.size.toString())}) قیمت کالاها",
-                amount = "${ConvertNumbers.convertToPersianDigits(
-                    ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPrice.toString())
-                )} تومان ",
+                amount = "${
+                    ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPrice.toString())
+                    )
+                } تومان ",
                 amountColor = Color.Black
             )
         }
@@ -3909,9 +3911,11 @@ fun finalReceiptBoxInShoppingCard(countProduct: Int, data: List<ShoppingCardEnti
         if (totalPriceWithProfit.toInt() != 0) {
             SummaryRow(
                 title = "جمع سبد خرید",
-                amount = "${ConvertNumbers.convertToPersianDigits(
-                    ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPriceWithProfit.toString())
-                )} تومان ",
+                amount = "${
+                    ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPriceWithProfit.toString())
+                    )
+                } تومان ",
                 amountColor = Color.Black
             )
         }
@@ -3919,9 +3923,11 @@ fun finalReceiptBoxInShoppingCard(countProduct: Int, data: List<ShoppingCardEnti
         if (totalTakhfif.toInt() != 0) {
             SummaryRow(
                 title = "سود شما از خرید",
-                amount = "${ConvertNumbers.convertToPersianDigits(
-                    ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalTakhfif.toString())
-                )} تومان ",
+                amount = "${
+                    ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalTakhfif.toString())
+                    )
+                } تومان ",
                 amountColor = DarkGreen
             )
         }
@@ -4100,7 +4106,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
             verticalAlignment = Alignment.Bottom
         ) {
 
-            manageBoxCountOfProductInShoppingCard()
+            manageBoxCountOfProductInShoppingCard(product.id)
 
             priseSectionInShoppingCard(product.price)
         }
@@ -4108,7 +4114,10 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
 }
 
 @Composable
-fun manageBoxCountOfProductInShoppingCard() {
+fun manageBoxCountOfProductInShoppingCard(productId: Long) {
+    val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
+    var count by remember { mutableStateOf(1) }
+
     Box(
         modifier = Modifier
             .border(1.dp, color = Color.LightGray, RoundedCornerShape(5.dp))
@@ -4123,13 +4132,14 @@ fun manageBoxCountOfProductInShoppingCard() {
                 Icons.Default.Add, tint = PrimaryColor, contentDescription = null,
                 modifier = Modifier
                     .clickable {
-
+                        count += 1
+                        shoppingCardViewModel.updateProductCount(productId, count)
                     }
                     .padding(6.dp)
             )
 
             Text(
-                text = "1",
+                text = count.toString(),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = PrimaryColor,
@@ -4142,7 +4152,7 @@ fun manageBoxCountOfProductInShoppingCard() {
                 painterResource(R.drawable.delete), tint = PrimaryColor, contentDescription = null,
                 modifier = Modifier
                     .clickable {
-
+                        shoppingCardViewModel.deleteProductById(productId)
                     }
                     .padding(6.dp)
             )
