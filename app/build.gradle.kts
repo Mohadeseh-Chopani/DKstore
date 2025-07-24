@@ -38,6 +38,10 @@ android {
         viewBinding = true
         compose = true
     }
+
+    lint {
+        disable += "NullSafeMutableLiveData"
+    }
 }
 
 configurations.all {

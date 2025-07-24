@@ -162,6 +162,7 @@ import com.example.digikala.data.models.product.AttributeInformationData
 import com.example.digikala.data.models.product.DetailSection
 import com.example.digikala.data.models.product.LatestComment
 import com.example.digikala.data.models.product.LatestQuestion
+import com.example.digikala.data.models.product.Price
 import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.data.models.product.colorList
@@ -251,6 +252,13 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                 val route = currentRoute(navController)
 
                 when (route) {
+                    Const.HOME -> {
+                        Column {
+                            Spacer(modifier = Modifier.height(40.dp))
+                            searchBox()
+                        }
+                    }
+
                     Const.PRODUCT_DETAILS -> {
                         TopAppBar(
                             title = { Text("") },
@@ -312,13 +320,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                             }
                         )
                     }
-
-                    else -> {
-                        Column {
-                            Spacer(modifier = Modifier.height(40.dp))
-                            searchBox()
-                        }
-                    }
                 }
             }
         ) { innerPadding ->
@@ -369,7 +370,7 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
     // You can keep this logic to hide the bar on certain screens
     if (currentRoute(navController) == Const.PRODUCT_DETAILS ||
         currentRoute(navController) == "${Const.SEARCH}/{query}" ||
-        currentRoute(navController) == "${Const.SHOW_MORE}/{query}"||
+        currentRoute(navController) == "${Const.SHOW_MORE}/{query}" ||
         currentRoute(navController) == Const.TECHNICAL_INFORMATION
     ) {
         // Hides the bottom bar on the product details page
@@ -428,10 +429,6 @@ fun HomePage(homeViewModel: HomeViewModel) {
     val homeState by homeViewModel.homeState.collectAsState()
     val profileViewModel = LocalProvider.LocalProfileViewModel.current
     val context = LocalContext.current
-
-    //check status of user's login
-//    profileViewModel.loadUser(profileViewModel.getUserId())
-//    Log.i("MOX", "HomePage: "+ profileViewModel.getUserId())
 
     val data: HomePageData
 
@@ -1841,10 +1838,13 @@ fun ProductPageDesign(data: ProductPageData) {
 @Composable
 fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
     val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
+    val profileViewModel = LocalProvider.LocalProfileViewModel.current
     val navController = LocalProvider.LocalNavController.current
     val isProductInCart by shoppingCardViewModel.isProductInCart.collectAsState()
     var buttomText = remember { mutableStateOf("افزودن به سبد خرید") }
-    val context = LocalContext.current
+    val isLogin = profileViewModel.isUserLoggedIn.collectAsState()
+    val user by profileViewModel.userData.collectAsState()
+
 
     var currentIndex by remember { mutableStateOf(0) }
 
@@ -1891,27 +1891,34 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                     )
                 }
 
-                val shoppingCardEntity = ShoppingCardEntity(
-                    productId = data.result.product.id,
-                    products = data.result.product,
-                    userId = "09226237388",
-                    count = 1
-                )
+                val shoppingCardEntity = user?.phoneNumber?.let {
+                    ShoppingCardEntity(
+                        productId = data.result.product.id,
+                        products = data.result.product,
+                        userId = it,
+                        count = 1
+                    )
+                }
+
 
 
                 Button(
                     onClick = {
-                        if (shoppingCardViewModel.isLogin) {
-                            shoppingCardViewModel.addProductToDatabase(shoppingCardEntity)
+                        if (isProductInCart) {
+                            navController.navigate(Const.SHOPPING_CART)
                         } else {
-                            navController.currentBackStackEntry?.savedStateHandle?.set("from_menu", "accountPage")
-                            navController.navigate(Const.PROFILE)
-                            {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            if (isLogin.value == true) {
+                                shoppingCardEntity?.let { shoppingCardViewModel.addProductToDatabase(it) }
+                            } else {
+                                navController.currentBackStackEntry?.savedStateHandle?.set("from_menu", "accountPage")
+                                navController.navigate(Const.PROFILE)
+                                {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         }
                     },
@@ -1920,7 +1927,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                     modifier = Modifier.height(45.dp)
                 ) {
                     if (isProductInCart) {
-                        buttomText.value = "اضافه شده به سبد خرید"
+                        buttomText.value = "برو به سبد خرید"
                     } else {
                         buttomText.value = "افزودن به سبد خرید"
                     }
@@ -2236,7 +2243,7 @@ fun ProductColorList(colorData: ProductPageData) {
         .distinctBy { it.color.title_fa }
 
 
-    Log.d("MOX", "ProductColorList: "+ filteredVariants.size)
+    Log.d("MOX", "ProductColorList: " + filteredVariants.size)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2694,7 +2701,8 @@ fun ProductDetailsScreen(questionAndCommentData: ProductPageData) {
             Spacer(
                 Modifier
                     .fillMaxWidth()
-                    .height(40.dp))
+                    .height(40.dp)
+            )
         }
     }
 }
@@ -3807,7 +3815,9 @@ fun showMoreItem(allProducts: ProductsItem) {
 @Preview
 @Composable
 fun ShoppingCartPage() {
-//    var totalPrice = remm
+    val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
+    val shoppingCardData by shoppingCardViewModel.shoppingCartItems.collectAsState()
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Box(
             modifier = Modifier
@@ -3838,24 +3848,27 @@ fun ShoppingCartPage() {
                 )
 
                 LazyColumn {
-                    items(2) {
-                        productItemInshoppingCard()
+                    items(shoppingCardData.size) {
+                        productItemInshoppingCard(shoppingCardData, it)
                     }
 
                     item {
                         finalReceiptBoxInShoppingCard(
                             2,
-                            modifier = Modifier
-                                .fillMaxWidth()
+                            shoppingCardData
                         )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(80.dp))
                     }
                 }
             }
 
-
             ShoppingCardPageBottomBar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter),
+                shoppingCardData
             )
 
         }
@@ -3863,31 +3876,55 @@ fun ShoppingCartPage() {
 }
 
 @Composable
-fun finalReceiptBoxInShoppingCard(countProduct: Int, modifier: Modifier) {
-//    var totalPrice = calculateTotalPrice()
+fun finalReceiptBoxInShoppingCard(countProduct: Int, data: List<ShoppingCardEntity>) {
+    var totalPriceWithProfit: Long = 0
+    var totalTakhfif: Long = 0
+    var totalPrice: Long = 0
+
+    for (item in data) {
+        totalTakhfif += (item.products.price.rrp_price - item.products.price.selling_price)
+        totalPrice += item.products.price.rrp_price
+
+    }
+
+    totalPriceWithProfit = totalPrice - totalTakhfif
+
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        SummaryRow(
-            title = "(${countProduct}) قیمت کالاها",
-            amount = "۱,۹۵۰,۰۰۰ تومان",
-            amountColor = Color.Black
-        )
+        if (totalPrice.toInt() != 0) {
+            SummaryRow(
+                title = "(${ConvertNumbers.convertToPersianDigits(data.size.toString())}) قیمت کالاها",
+                amount = "${ConvertNumbers.convertToPersianDigits(
+                    ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPrice.toString())
+                )} تومان ",
+                amountColor = Color.Black
+            )
+        }
 
-        SummaryRow(
-            title = "جمع سبد خرید",
-            amount = "۱,۴۳۳,۵۰۰ تومان",
-            amountColor = Color.Black
-        )
+        if (totalPriceWithProfit.toInt() != 0) {
+            SummaryRow(
+                title = "جمع سبد خرید",
+                amount = "${ConvertNumbers.convertToPersianDigits(
+                    ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPriceWithProfit.toString())
+                )} تومان ",
+                amountColor = Color.Black
+            )
+        }
 
-        SummaryRow(
-            title = "سود شما از خرید",
-            amount = "۵۲۶,۵۰۰ تومان (۲۷٪)",
-            amountColor = DarkGreen
-        )
+        if (totalTakhfif.toInt() != 0) {
+            SummaryRow(
+                title = "سود شما از خرید",
+                amount = "${ConvertNumbers.convertToPersianDigits(
+                    ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalTakhfif.toString())
+                )} تومان ",
+                amountColor = DarkGreen
+            )
+        }
     }
 }
 
@@ -3919,9 +3956,10 @@ fun SummaryRow(
 
 
 @Composable
-fun productItemInshoppingCard() {
+fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemHeight = screenWidth * 0.74f
+    val product = data.get(index).products
 
     Card(
         modifier = Modifier
@@ -3941,7 +3979,7 @@ fun productItemInshoppingCard() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painterResource(R.drawable.ic_launcher_background),
+                    painter = rememberAsyncImagePainter(product.images.main),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -3950,17 +3988,18 @@ fun productItemInshoppingCard() {
                         .clip(RoundedCornerShape(5.dp))
                 )
 
-                Text(
-                    text = "فروش ویژه",
-                    color = PrimaryColor,
-                    fontSize = 16.sp,
-                    fontFamily = MyCustomFont,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                )
-
+                product.price.badge?.let {
+                    Text(
+                        text = it.title,
+                        color = PrimaryColor,
+                        fontSize = 14.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(vertical = 12.dp)
+                    )
+                }
             }
 
             Column(
@@ -3969,7 +4008,7 @@ fun productItemInshoppingCard() {
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "موبایل سامسونگ 24 اولترا ابی رنگ همراه گارانتی",
+                    text = product.title_fa,
                     fontSize = 14.sp,
                     fontFamily = MyCustomFont,
                     maxLines = 2,
@@ -3979,13 +4018,13 @@ fun productItemInshoppingCard() {
                         .padding(top = 4.dp, bottom = 4.dp)
                 )
 
-                Row(Modifier.padding(top = 4.dp)) {
+                Row(Modifier.padding(top = 8.dp)) {
                     Image(
                         painter = painterResource(R.drawable.guarantee),
                         contentDescription = null
                     )
                     Text(
-                        text = "این محصول دارای گارانتی است",
+                        text = product.variants.get(0).warranty.title_fa,
                         fontSize = 13.sp,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
@@ -4002,7 +4041,7 @@ fun productItemInshoppingCard() {
                         contentDescription = null
                     )
                     Text(
-                        text = "دیجی کالا",
+                        text = product.variants.get(0).seller.title_fa,
                         fontSize = 13.sp,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
@@ -4013,38 +4052,44 @@ fun productItemInshoppingCard() {
                     )
                 }
 
-                Row(Modifier.padding(top = 4.dp)) {
-                    Image(
-                        painter = painterResource(R.drawable.delivary_express),
-                        contentDescription = null
-                    )
-                    Text(
-                        text = "ارسال دیجی کالا",
-                        fontSize = 13.sp,
-                        fontFamily = MyCustomFont,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.DarkGray,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                    )
+                product?.variants?.get(0)?.shipment_methods?.providers?.get(0)?.let {
+                    Row(Modifier.padding(top = 4.dp)) {
+                        Image(
+                            painter = painterResource(R.drawable.delivary_express),
+                            contentDescription = null
+                        )
+                        Text(
+                            text = it.title,
+                            fontSize = 13.sp,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.DarkGray,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                        )
+                    }
                 }
 
-                Row(Modifier.padding(top = 4.dp)) {
-                    Image(
-                        painter = painterResource(R.drawable.delivery_today),
-                        contentDescription = null
-                    )
-                    Text(
-                        text = "ارسال امروز ",
-                        fontSize = 13.sp,
-                        fontFamily = MyCustomFont,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.DarkGray,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                    )
+                if (product?.variants?.get(0)?.shipment_methods?.providers?.size!! > 1) {
+                    product?.variants?.get(0)?.shipment_methods?.providers?.get(1)?.let {
+                        Row(Modifier.padding(top = 4.dp)) {
+                            Image(
+                                painter = painterResource(R.drawable.delivery_today),
+                                contentDescription = null
+                            )
+                            Text(
+                                text = it.title,
+                                fontSize = 13.sp,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.DarkGray,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -4057,7 +4102,7 @@ fun productItemInshoppingCard() {
 
             manageBoxCountOfProductInShoppingCard()
 
-            priseSectionInShoppingCard()
+            priseSectionInShoppingCard(product.price)
         }
     }
 }
@@ -4106,39 +4151,42 @@ fun manageBoxCountOfProductInShoppingCard() {
 }
 
 @Composable
-fun priseSectionInShoppingCard() {
+fun priseSectionInShoppingCard(price: Price) {
+    var takhfif = price.rrp_price - price.selling_price
+
     Column {
+        if (takhfif != 0.toLong()) {
+            Row {
+                Text(
+                    text = ConvertNumbers.convertToPersianDigits(
+                        ConvertNumbers.convertRialToToman(takhfif.toString())
+                    ),
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    color = PrimaryColor,
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 4.dp)
+                )
 
-        Row {
-            Text(
-                text = ConvertNumbers.convertToPersianDigits(
-                    ConvertNumbers.convertRialToToman("10000")
-                ),
-                fontFamily = MyCustomFont,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                color = PrimaryColor,
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 4.dp)
-            )
-
-            Text(
-                text = "تومان تخفیف",
-                fontFamily = MyCustomFont,
-                color = PrimaryColor,
-                fontWeight = FontWeight.Normal,
-                fontSize = 12.sp
-            )
+                Text(
+                    text = "تومان تخفیف",
+                    fontFamily = MyCustomFont,
+                    color = PrimaryColor,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 13.sp
+                )
+            }
         }
 
         Row {
             Text(
                 text = ConvertNumbers.convertToPersianDigits(
-                    ConvertNumbers.convertRialToToman("12000000")
+                    ConvertNumbers.convertRialToToman(price.selling_price.toString())
                 ),
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 modifier = Modifier
                     .padding(start = 16.dp, end = 4.dp)
             )
@@ -4147,25 +4195,16 @@ fun priseSectionInShoppingCard() {
                 text = "تومان",
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
-                fontSize = 12.sp
+                fontSize = 13.sp
             )
         }
     }
 }
 
 @Composable
-fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier) {
-
-    var currentIndex by remember { mutableStateOf(0) }
-
-//    data.result?.product?.product_badges?.let {
-//        LaunchedEffect(Unit) {
-//            while (true) {
-//                delay(3000L)
-//                currentIndex = (currentIndex + 1) % (data.result.product.product_badges.size)
-//            }
-//        }
-//    }
+fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<ShoppingCardEntity>) {
+    val navController = LocalProvider.LocalNavController.current
+    val lastPrise: Long = 0
 
     Box(
         modifier = modifier
@@ -4198,7 +4237,9 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier) {
 //                }
 
                 Button(
-                    onClick = { /* TODO: Handle Add to Cart */ },
+                    onClick = {
+                        navController.navigate(Const.HOME)
+                    },
                     colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.height(45.dp)
@@ -4251,7 +4292,7 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier) {
                     Text(
                         text = "${
                             ConvertNumbers.convertToPersianDigits(
-                                ConvertNumbers.convertRialToToman("95793310")
+                                ConvertNumbers.convertRialToToman(ConvertNumbers.calculatePrices(data).totalPriceWithProfit.toString())
                             )
                         } تومان ",
                         fontWeight = FontWeight.Normal,
@@ -4278,9 +4319,11 @@ fun AccountPage() {
                 CircularProgressIndicator()
             }
         }
+
         true -> {
             ProfilePage()
         }
+
         false -> {
             LoginPage()
         }
@@ -4290,122 +4333,122 @@ fun AccountPage() {
 @Composable
 fun ProfilePage() {
 //    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        // ستون اصلی برای چیدمان عمودی کل صفحه
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 32.dp)
         ) {
-            // ستون اصلی برای چیدمان عمودی کل صفحه
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 32.dp)
+            // --- بخش هدر (عنوان و آیکون‌ها) ---
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // --- بخش هدر (عنوان و آیکون‌ها) ---
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // آیکون‌ها
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        IconButton(onClick = { /* TODO: Handle edit click */ }) {
-                            Icon(Icons.Default.Edit, contentDescription = "ویرایش")
-                        }
-                        IconButton(onClick = { /* TODO: Handle cart click */ }) {
-                            Icon(Icons.Default.ShoppingCart, contentDescription = "سبد خرید")
-                        }
-                        IconButton(onClick = { /* TODO: Handle logout click */ }) {
-                            Icon(Icons.Default.Lock, contentDescription = "خروج")
-                        }
+                // آیکون‌ها
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    IconButton(onClick = { /* TODO: Handle edit click */ }) {
+                        Icon(Icons.Default.Edit, contentDescription = "ویرایش")
                     }
-
-                    // عنوان
-                    Text(
-                        text = "پروفایل شما :",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    IconButton(onClick = { /* TODO: Handle cart click */ }) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "سبد خرید")
+                    }
+                    IconButton(onClick = { /* TODO: Handle logout click */ }) {
+                        Icon(Icons.Default.Lock, contentDescription = "خروج")
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                // عنوان
+                Text(
+                    text = "پروفایل شما :",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-                // --- بخش اطلاعات کاربری ---
+            Spacer(modifier = Modifier.height(32.dp))
 
-                // آیتم: نام و نام خانوادگی
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "نام و نام خانوادگی",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Right
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Spacer(modifier = Modifier.height(24.dp)) // فضای خالی به جای مقدار
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color.LightGray, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+            // --- بخش اطلاعات کاربری ---
 
-                // آیتم: شماره موبایل
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "شماره موبایل",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Right
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "۰۹۱۲۳۵۴۸۶۵۸",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 16.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Right
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color.LightGray, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+            // آیتم: نام و نام خانوادگی
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "نام و نام خانوادگی",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp)) // فضای خالی به جای مقدار
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = Color.LightGray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-                // آیتم: رمز عبور
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "رمز عبور",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Right
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "وارد نشده است.",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 16.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Right
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color.LightGray, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+            // آیتم: شماره موبایل
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "شماره موبایل",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "۰۹۱۲۳۵۴۸۶۵۸",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = Color.LightGray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-                // آیتم: کدملی
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "کدملی",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Right
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // این آیتم مقدار و خط جداکننده ندارد
-                }
+            // آیتم: رمز عبور
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "رمز عبور",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "وارد نشده است.",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = Color.LightGray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // آیتم: کدملی
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "کدملی",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                // این آیتم مقدار و خط جداکننده ندارد
             }
         }
+    }
 //    }
 }
 

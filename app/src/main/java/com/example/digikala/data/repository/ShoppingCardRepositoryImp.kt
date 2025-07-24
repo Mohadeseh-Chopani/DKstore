@@ -16,7 +16,7 @@ class ShoppingCardRepositoryImp(val shoppingCardDataSourceImp: ShoppingCardDataS
         return shoppingCardDataSourceImp.deleteProductById(productId)
     }
 
-    override suspend fun getProductsList(userId: String): UserWithSoppingCard? {
+    override fun getProductsList(userId: String): Flow<List<ShoppingCardEntity>> {
         return shoppingCardDataSourceImp.getProductsList(userId)
     }
 

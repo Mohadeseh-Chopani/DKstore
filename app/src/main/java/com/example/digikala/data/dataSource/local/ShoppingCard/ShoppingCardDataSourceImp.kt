@@ -16,7 +16,7 @@ class ShoppingCardDataSourceImp(val dao:Dao): ShoppingCardDataSource {
         return dao.deleteProductById(productId)
     }
 
-    override suspend fun getProductsList(userId: String): UserWithSoppingCard? {
+    override fun getProductsList(userId: String): Flow<List<ShoppingCardEntity>> {
         return dao.getUserWithShoppingCart(userId)
     }
 

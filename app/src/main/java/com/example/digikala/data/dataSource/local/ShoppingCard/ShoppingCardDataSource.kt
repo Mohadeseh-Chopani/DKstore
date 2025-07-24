@@ -11,7 +11,7 @@ interface ShoppingCardDataSource {
 
     suspend fun deleteProductById(productId: Int)
 
-    suspend fun getProductsList(userId: String): UserWithSoppingCard?
+    fun getProductsList(userId: String): Flow<List<ShoppingCardEntity>>
 
     suspend fun findProductById(productId: Long): Flow<ShoppingCardEntity?>
 }

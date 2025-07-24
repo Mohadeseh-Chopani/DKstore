@@ -388,3 +388,9 @@ data class BigdataTrackerData(
 data class PageInfo(
     val product_id: Long,
 )
+
+data class ShoppingCardPrices(
+    var totalPrice: Long,
+    var totalPriceWithProfit: Long,
+    var totalTakhfif: Long
+)

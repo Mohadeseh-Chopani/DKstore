@@ -76,14 +76,20 @@ class ProfileViewModel(val profileRepositoryImp: ProfileRepositoryImp,
             )
 
 
-    private val _userData = MutableStateFlow<UserEntity?>(null)
-    val userData = _userData.asStateFlow()
+    val userData: StateFlow<UserEntity?> =
+        sessionManager.getUserIdFlow
+            .flatMapLatest { userId ->
+                if (userId == null) {
+                    flowOf(null)
+                } else {
+                    profileRepositoryImp.getUserFromDatabase(userId)
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = null
+            )
 
-    fun getUserData(userId: String) {
-        viewModelScope.launch {
-            profileRepositoryImp.getUserFromDatabase(userId).collect()
-        }
-    }
 
     fun logout() {
         viewModelScope.launch {

@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.Flow
 interface Dao {
     // This is the function you'll call to get a user and all their cart items
     @Transaction
-    @Query("SELECT * FROM USERDB WHERE phoneNumber = :userId")
-    suspend fun getUserWithShoppingCart(userId: String): UserWithSoppingCard?
+    @Query("SELECT * FROM SHOPPINGCARDDB WHERE userId = :userId")
+    fun getUserWithShoppingCart(userId: String): Flow<List<ShoppingCardEntity>>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertUser(user: UserEntity): Long
