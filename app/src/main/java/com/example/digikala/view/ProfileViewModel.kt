@@ -91,6 +91,23 @@ class ProfileViewModel(val profileRepositoryImp: ProfileRepositoryImp,
             )
 
 
+    fun updateUserAccount(name: String, nationalCode: String, address: String, phoneNumber: String) {
+        viewModelScope.launch {
+            profileRepositoryImp.updateUserAccount(
+                name,
+                nationalCode,
+                address,
+                phoneNumber
+            )
+        }
+    }
+
+    fun deleteUser(userId: String) {
+        viewModelScope.launch {
+            profileRepositoryImp.deleteUserById(userId)
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             sessionManager?.clearSession()

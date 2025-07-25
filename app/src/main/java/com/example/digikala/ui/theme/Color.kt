@@ -18,6 +18,8 @@ val MenuBackground = Color(0xFFF5F5F5)
 val MenuItems = Color(0xFF6E6E6E)
 val IconsUnSelected = Color(0xFF6E6E6E)
 val BackgroundMenuItemSelected = Color(0xFFFFFFFF)
+val IconColor = Color(0xFF6E6E6E)
+val White = Color(0xFFFFFFFF)
 
 val Purple40 = Color(0xFFED1944)
 val PurpleGrey40 = Color(0xFF625b71)

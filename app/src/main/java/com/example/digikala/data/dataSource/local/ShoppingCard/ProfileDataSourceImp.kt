@@ -20,4 +20,12 @@ class ProfileDataSourceImp(val dao: Dao): ProfileDataSource {
     override suspend fun addUserToDatabase(user: UserEntity): Long {
         return dao.insertUser(user)
     }
+
+    override suspend fun updateUserAccount(name: String, nationalCode: String, address: String, phoneNumber: String) {
+        return dao.updateUserAccount(name, nationalCode, address, phoneNumber)
+    }
+
+    override suspend fun deleteUserById(userId: String) {
+        return dao.deleteUserById(userId)
+    }
 }

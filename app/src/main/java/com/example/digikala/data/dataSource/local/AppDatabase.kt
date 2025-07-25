@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
 import com.example.digikala.utils.ProductConverter
 
 @TypeConverters(ProductConverter::class)
-@Database(entities = [UserEntity::class, ShoppingCardEntity::class], version = 2, exportSchema = false)
+@Database(entities = [UserEntity::class, ShoppingCardEntity::class], version = 1, exportSchema = false)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun appDao(): Dao
 

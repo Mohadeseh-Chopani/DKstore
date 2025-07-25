@@ -2,7 +2,6 @@
 
 package com.example.digikala.view
 
-import SessionManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -49,7 +48,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import com.google.accompanist.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
@@ -57,12 +55,12 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -70,8 +68,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
@@ -83,7 +79,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -92,9 +87,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -111,9 +106,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -121,13 +114,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -165,7 +158,6 @@ import com.example.digikala.data.models.product.LatestQuestion
 import com.example.digikala.data.models.product.Price
 import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
-import com.example.digikala.data.models.product.colorList
 import com.example.digikala.data.models.search.ProductsItem
 import com.example.digikala.data.models.search.SearchData
 import com.example.digikala.databinding.ProductInfoSectionBinding
@@ -173,6 +165,7 @@ import com.example.digikala.ui.theme.BackgroundColor
 import com.example.digikala.ui.theme.BackgroundMenuItemSelected
 import com.example.digikala.ui.theme.DarkGreen
 import com.example.digikala.ui.theme.Green
+import com.example.digikala.ui.theme.IconColor
 import com.example.digikala.ui.theme.IconsUnSelected
 import com.example.digikala.ui.theme.LightBlue
 import com.example.digikala.ui.theme.LightGrayColor
@@ -181,6 +174,7 @@ import com.example.digikala.ui.theme.MenuItemColor
 import com.example.digikala.ui.theme.MenuItems
 import com.example.digikala.ui.theme.PrimaryColor
 import com.example.digikala.ui.theme.StarColor
+import com.example.digikala.ui.theme.White
 import com.example.digikala.utils.BottomNavigationItem
 import com.example.digikala.utils.Const
 import com.example.digikala.utils.ConvertNumbers
@@ -190,7 +184,9 @@ import com.example.digikala.utils.NetworkState
 import com.example.digikala.utils.RegistrationState
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.*
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.HorizontalPagerIndicator
+import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -223,7 +219,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 Scaffold(
                     modifier = Modifier
-                        .background(Color.White)
+                        .background(White)
                         .fillMaxSize()
                 ) { innerPadding ->
                     BaseStructure(
@@ -246,7 +242,8 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
             modifier = Modifier
-                .background(BackgroundColor),
+                .background(White)
+                .padding(top = 20.dp),
             bottomBar = { BottomNavigationBar(navController, context = context) },
             topBar = {
                 val route = currentRoute(navController)
@@ -384,7 +381,7 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
         )
         NavigationBar(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = Color.White
+            containerColor = White
         ) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
@@ -397,7 +394,11 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
                     NavigationBarItem(
                         selected = currentDestination?.hierarchy?.any { it.route == navigationItem.route } == true,
                         label = {
-                            Text(navigationItem.label)
+                            Text(
+                                navigationItem.label,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal
+                            )
                         },
                         icon = {
                             Icon(
@@ -842,7 +843,7 @@ fun productSliderTrending(
                     ) {
                         Row(
                             modifier = Modifier
-                                .background(Color.White)
+                                .background(White)
                                 .padding(8.dp)
                         ) {
                             Image(
@@ -938,7 +939,7 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
                     ) {
                         Row(
                             modifier = Modifier
-                                .background(Color.White)
+                                .background(White)
                                 .padding(8.dp)
                         ) {
                             Image(
@@ -1051,7 +1052,7 @@ fun ProductItemInHomePage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(White)
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1095,7 +1096,7 @@ fun ProductItemInHomePage(
                         discount?.let {
                             Text(
                                 text = ConvertNumbers.convertToPersianDigits("${it}٪"),
-                                color = Color.White,
+                                color = White,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = MyCustomFont,
                                 fontSize = 13.sp,
@@ -1156,7 +1157,7 @@ fun RowProductList1(result: Home1) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1221,7 +1222,7 @@ fun RowProductList2(result: Home2) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1286,7 +1287,7 @@ fun RowProductList3(result: Home3) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1350,7 +1351,7 @@ fun RowProductList4(result: Home4) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1414,7 +1415,7 @@ fun RowProductList5(result: Home5) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1478,7 +1479,7 @@ fun RowProductList6(result: Home6) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1542,7 +1543,7 @@ fun RowProductList7(result: Home7) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1606,7 +1607,7 @@ fun RowProductList8(result: Home8) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         Row(
             modifier = Modifier
@@ -1671,7 +1672,7 @@ fun ShowMoreSection(itemWidth: Dp, itemHeight: Dp, title: String?) {
             .height(itemHeight)
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color.White,
+        backgroundColor = White,
         elevation = 0.dp,
         onClick = {
             title?.let { showMoreAction(it, searchViewModel) }
@@ -1751,7 +1752,7 @@ fun searchBox() {
             Icon(
                 modifier = Modifier.size(30.dp),
                 imageVector = Icons.Default.Search,
-                tint = Color.White,
+                tint = White,
                 contentDescription = "search"
             )
 
@@ -1762,7 +1763,7 @@ fun searchBox() {
                 text = "جستجو کالا",
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
-                style = TextStyle(fontSize = 14.sp, color = Color.White)
+                style = TextStyle(fontSize = 14.sp, color = White)
             )
         }
     }
@@ -1864,7 +1865,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
             .padding(16.dp)
     ) {
         Row(
@@ -1933,7 +1934,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                     }
                     Text(
                         text = buttomText.value,
-                        color = Color.White,
+                        color = White,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Medium
                     )
@@ -1945,7 +1946,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = ConvertNumbers.convertToPersianDigits("${data.result.product.price.discount_percent}٪"),
-                            color = Color.White,
+                            color = White,
                             fontWeight = FontWeight.Medium,
                             fontFamily = MyCustomFont,
                             fontSize = 13.sp,
@@ -2500,7 +2501,7 @@ fun SimilarProductItemInProductPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(White)
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -2585,7 +2586,7 @@ fun SimilarProductItemInProductPage(
                         ) {
                             Text(
                                 text = ConvertNumbers.convertToPersianDigits(it.toString() + "%"),
-                                color = Color.White,
+                                color = White,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 10.sp,
@@ -2817,7 +2818,7 @@ fun QuestionItem(question: LatestQuestion) {
             .height(200.dp)
             .padding(bottom = 20.dp)
             .padding(horizontal = 4.dp)
-            .background(color = Color.White, shape = RoundedCornerShape(8.dp))
+            .background(color = White, shape = RoundedCornerShape(8.dp))
             .border(0.2.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
         elevation = 2.dp
     ) {
@@ -3211,7 +3212,7 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                                     Box(
                                         modifier = Modifier
                                             .size(64.dp)
-                                            .background(color = Color.White)
+                                            .background(color = White)
                                             .border(width = 1.dp, color = Color.LightGray)
                                             .padding(4.dp),
                                         contentAlignment = Alignment.Center
@@ -3349,12 +3350,15 @@ fun SearchPage(query: String) {
                 state = listState,
                 modifier = Modifier.fillMaxSize()
             ) {
-                products?.let {
-                    items(it.size) { index ->
-                        val product = it[index]
-                        SearchItemDesign(product)
+                products
+                    ?.filterIsInstance<ProductsItem>()
+                    ?.let { filteredProducts ->
+                        items(filteredProducts.size) { index ->
+                            val product = filteredProducts[index]
+                            SearchItemDesign(product)
+                        }
                     }
-                }
+
 
                 if (showBottomLoader.value) {
                     item {
@@ -3375,7 +3379,7 @@ fun SearchPage(query: String) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.5f)),
+                    .background(White.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = PrimaryColor)
@@ -3574,7 +3578,7 @@ fun SearchItemDesign(product: ProductsItem) {
                         ) {
                             Text(
                                 text = ConvertNumbers.convertToPersianDigits("${product.price.discount_percent}٪"),
-                                color = Color.White,
+                                color = White,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = MyCustomFont,
                                 textAlign = TextAlign.Center,
@@ -3675,7 +3679,7 @@ fun ShowMorePage(query: String) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.5f)),
+                    .background(White.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = PrimaryColor)
@@ -3712,7 +3716,7 @@ fun showMoreItem(allProducts: ProductsItem) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(White)
                 .padding(vertical = 6.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -3759,7 +3763,7 @@ fun showMoreItem(allProducts: ProductsItem) {
                         allProducts.price.discount_percent?.let {
                             Text(
                                 text = ConvertNumbers.convertToPersianDigits("${allProducts.price.discount_percent}٪"),
-                                color = Color.White,
+                                color = White,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = MyCustomFont,
                                 fontSize = 13.sp,
@@ -4219,7 +4223,7 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<Shopping
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
             .border(1.dp, color = LightGrayColor),
     ) {
         Row(
@@ -4256,7 +4260,7 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<Shopping
                 ) {
                     Text(
                         text = "ادامه فرایند خرید",
-                        color = Color.White,
+                        color = White,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Medium
                     )
@@ -4268,7 +4272,7 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<Shopping
                 Column(verticalArrangement = Arrangement.Center) {
 //                        Text(
 //                            text = ConvertNumbers.convertToPersianDigits("${data.result.product.price.discount_percent}٪"),
-//                            color = Color.White,
+//                            color = White,
 //                            fontWeight = FontWeight.Medium,
 //                            fontFamily = MyCustomFont,
 //                            fontSize = 13.sp,
@@ -4342,129 +4346,386 @@ fun AccountPage() {
 
 @Composable
 fun ProfilePage() {
-//    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    val profileViewModel = LocalProvider.LocalProfileViewModel.current
+    val user = profileViewModel.userData.collectAsState()
+    val navController = LocalProvider.LocalNavController.current
+
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = White
     ) {
-        // ستون اصلی برای چیدمان عمودی کل صفحه
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .padding(16.dp)
         ) {
-            // --- بخش هدر (عنوان و آیکون‌ها) ---
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // آیکون‌ها
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    IconButton(onClick = { /* TODO: Handle edit click */ }) {
-                        Icon(Icons.Default.Edit, contentDescription = "ویرایش")
-                    }
-                    IconButton(onClick = { /* TODO: Handle cart click */ }) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "سبد خرید")
-                    }
-                    IconButton(onClick = { /* TODO: Handle logout click */ }) {
-                        Icon(Icons.Default.Lock, contentDescription = "خروج")
-                    }
-                }
 
-                // عنوان
                 Text(
                     text = "پروفایل شما :",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
+                    fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    textAlign = TextAlign.Right
                 )
+
+                Row {
+                    IconButton(onClick = { showEditDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = IconColor)
+                    }
+                    IconButton(onClick = {
+                        navController.navigate(Const.SHOPPING_CART)
+                    }) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "سبد خرید", tint = IconColor)
+                    }
+                    IconButton(onClick = {
+                        showLogoutDialog = true
+                    }) {
+                        Icon(painterResource(R.drawable.logout), contentDescription = "خروج", tint = IconColor)
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            ProfileItem(label = "نام و نام خانوادگی", value = user.value?.name.toString())
+            ProfileItem(label = "شماره موبایل", value = user.value?.phoneNumber.toString())
+            ProfileItem(label = "رمز عبور", value = user.value?.password.toString())
+            ProfileItem(label = "کدملی", value = user.value?.nationalCode.toString())
+            ProfileItem(label = "آدرس", value = user.value?.address.toString())
 
-            // --- بخش اطلاعات کاربری ---
+            if (showEditDialog) {
+                EditProfileDialog(
+                    showDialog = true,
+                    onDismiss = { showEditDialog = false },
 
-            // آیتم: نام و نام خانوادگی
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "نام و نام خانوادگی",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Right
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Spacer(modifier = Modifier.height(24.dp)) // فضای خالی به جای مقدار
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = Color.LightGray, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(16.dp))
+                    )
             }
 
-            // آیتم: شماره موبایل
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "شماره موبایل",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Right
+            if (showLogoutDialog) {
+                LogoutConfirmationDialog(
+                    showLogoutDialog,
+                    onConfirm = {
+                        showLogoutDialog = true
+                        profileViewModel.logout()
+                        profileViewModel.deleteUser(user.value?.phoneNumber.toString())
+                    },
+                    onDismiss = { showLogoutDialog = false }
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "۰۹۱۲۳۵۴۸۶۵۸",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Right
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = Color.LightGray, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // آیتم: رمز عبور
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "رمز عبور",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Right
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "وارد نشده است.",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Right
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = Color.LightGray, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // آیتم: کدملی
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "کدملی",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Right
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                // این آیتم مقدار و خط جداکننده ندارد
             }
         }
     }
-//    }
 }
+
+@Composable
+fun ProfileItem(label: String, value: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            color = Color.Gray,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Right,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        if (value != "null") {
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Right,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Divider(color = Color.LightGray, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+}
+
+
+@Composable
+fun LogoutConfirmationDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            backgroundColor = White,
+            shape = RoundedCornerShape(12.dp),
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        IconButton(
+                            onClick = {
+                                onDismiss()
+                            },
+                            modifier = Modifier.align(Alignment.CenterStart)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "بستن دیالوگ",
+                            )
+                        }
+                        Text(
+                            text = "از حساب کاربری خارج می‌شوید؟",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "با خروج از حساب کاربری، به سبد خرید فعلی‌تان دسترسی نخواهید داشت",
+                        textAlign = TextAlign.Center,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        lineHeight = 24.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = PrimaryColor
+                            ),
+                            border = ButtonDefaults.outlinedBorder.copy(
+                                brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFE91E63))
+                            )
+                        ) {
+                            Text(
+                                "انصراف",
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                            )
+                        }
+                        Button(
+                            onClick = {
+                                onConfirm()
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = PrimaryColor
+                            )
+                        ) {
+                            Text(
+                                "خروج از حساب",
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal,
+                                color = White
+
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
+}
+
 
 @SuppressLint("RememberReturnType")
 private fun isValidPhoneNumber(phone: String): Boolean {
     return phone.matches(Regex("^09\\d{9}$"))
+}
+
+@Composable
+fun EditProfileDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit
+) {
+    val profileViewModel = LocalProvider.LocalProfileViewModel.current
+    val user by profileViewModel.userData.collectAsState()
+
+
+    if (showDialog) {
+        Dialog(onDismissRequest = onDismiss) {
+
+            var name by remember { mutableStateOf("") }
+            var nationalCode by remember { mutableStateOf("") }
+            var address by remember { mutableStateOf("") }
+
+            var nameError by remember { mutableStateOf(false) }
+            var nationalCodeError by remember { mutableStateOf(false) }
+            var addressError by remember { mutableStateOf(false) }
+
+            if (user?.name != null) {
+                name = user?.name.toString()
+            }
+
+            if (user?.nationalCode != null) {
+                nationalCode = user?.nationalCode.toString()
+            }
+
+            if (user?.address != null) {
+                address = user?.address.toString()
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.Close, contentDescription = "بستن")
+                        }
+                        Text(
+                            "ویرایش پروفایل",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = {
+                            name = it
+                            if (it.isNotBlank()) nameError = false
+                        },
+                        label = {
+                            Text(
+                                "نام و نام خانوادگی *",
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        },
+                        isError = nameError,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    if (nameError)
+                        Text(
+                            "نام و نام خانوادگی الزامی است",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal
+                        )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = nationalCode,
+                        onValueChange = {
+                            nationalCode = it
+                            if (it.isNotBlank()) nationalCodeError = false
+                        },
+                        label = {
+                            Text(
+                                "کد ملی *",
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        },
+                        isError = nationalCodeError,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+                    )
+                    if (nationalCodeError)
+                        Text(
+                            "کد ملی الزامی است",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal
+                        )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = {
+                            address = it
+                            if (it.isNotBlank()) addressError = false
+                        },
+                        label = {
+                            Text(
+                                " آدرس *",
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        },
+                        isError = addressError,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    if (addressError)
+                        Text(
+                            " آدرس الزامی است",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal
+                        )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            nameError = name.isBlank()
+                            nationalCodeError = nationalCode.isBlank()
+                            addressError = address.isBlank()
+
+                            val hasError = nameError || nationalCodeError || addressError
+
+                            if (!hasError) {
+                                println("نام و نام خانوادگی: $name")
+                                println("کد ملی: $nationalCode")
+                                println("آدرس : $address")
+                                profileViewModel.updateUserAccount(
+                                    name,
+                                    nationalCode,
+                                    address,
+                                    user?.phoneNumber.toString()
+                                )
+                                onDismiss()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor)
+                    ) {
+                        Text(
+                            "تأیید",
+                            color = White,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -4480,14 +4741,11 @@ fun LoginPage() {
     val passwordFocusRequester = remember { FocusRequester() }
     val profileViewModel = LocalProvider.LocalProfileViewModel.current
     val context = LocalContext.current
-    val shoppingCardViewModel = LocalProvider.LocalShoppingCardViewModel.current
     val registrationState by profileViewModel.registrationState.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(registrationState) {
         when (registrationState) {
             RegistrationState.SUCCESS -> {
-                Toast.makeText(context, "ثبت نام با موفقیت انجام شد", Toast.LENGTH_LONG).show()
                 profileViewModel.resetRegistrationState()
             }
 
@@ -4523,7 +4781,8 @@ fun LoginPage() {
         Text(
             text = "برای ورود و یا ثبت‌نام در دیجی‌کالا شماره موبایل خود را وارد نمایید",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = MyCustomFont,
+            fontWeight = FontWeight.Normal,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
@@ -4535,8 +4794,21 @@ fun LoginPage() {
                 phoneNumber = it
                 phoneNumberErrorText = null
             },
-            label = { Text("شماره موبایل") },
-            placeholder = { Text("مثلاً 09123456789", color = Color.Gray) },
+            label = {
+                Text(
+                    "شماره موبایل",
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
+                )
+            },
+            placeholder = {
+                Text(
+                    "مثلاً 09123456789",
+                    color = Color.Gray,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier
                 .fillMaxWidth()
@@ -4547,6 +4819,8 @@ fun LoginPage() {
         phoneNumberErrorText?.let { error ->
             Text(
                 text = error,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
@@ -4563,18 +4837,31 @@ fun LoginPage() {
                 password = it
                 passwordErrorText = null
             },
-            label = { Text("رمز عبور") },
-            placeholder = { Text("رمز عبور خود را وارد کنید", color = Color.Gray) },
+            label = {
+                Text(
+                    "رمز عبور",
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
+                )
+            },
+            placeholder = {
+                Text(
+                    "رمز عبور خود را وارد کنید",
+                    color = Color.Gray,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Normal,
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Default.Star else Icons.Default.Search,
-                        contentDescription = if (passwordVisible) "مخفی کردن رمز" else "نمایش رمز"
-                    )
-                }
-            },
+//            trailingIcon = {
+//                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+//                    Icon(
+//                        imageVector = if (passwordVisible) Icons.Default.Star else Icons.Default.Search,
+//                        contentDescription = if (passwordVisible) "مخفی کردن رمز" else "نمایش رمز"
+//                    )
+//                }
+//            },
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(passwordFocusRequester),
@@ -4584,6 +4871,8 @@ fun LoginPage() {
         passwordErrorText?.let { error ->
             Text(
                 text = error,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
@@ -4632,14 +4921,20 @@ fun LoginPage() {
                 .height(48.dp),
             colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor)
         ) {
-            Text("ورود به دیجی‌کالا", color = Color.White)
+            Text(
+                "ورود به دیجی‌کالا",
+                color = White,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "ورود شما به معنای پذیرش شرایط دیجی‌کالا و قوانین حریم‌خصوصی است",
-            style = MaterialTheme.typography.bodySmall,
+            fontFamily = MyCustomFont,
+            fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -4654,7 +4949,7 @@ fun Preview() {
 //    ProductDetailsScreen()
 //    ProductDetailsScreen()
 //    DigikalaTheme {
-//    BaseStructure(modifier = Modifier.background(Color.White), homeViewModel)
+//    BaseStructure(modifier = Modifier.background(White), homeViewModel)
 //        HomePage(navController = rememberNavController())
 //    RowProductList()
 

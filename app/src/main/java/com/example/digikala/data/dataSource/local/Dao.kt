@@ -19,7 +19,7 @@ interface Dao {
     suspend fun insertUser(user: UserEntity): Long
 
     @Query("DELETE FROM USERDB WHERE phoneNumber = :userId")
-    suspend fun deleteUserById(userId: Long)
+    suspend fun deleteUserById(userId: String)
 
     @Query("DELETE FROM USERDB ")
     suspend fun deleteAllUser()
@@ -41,4 +41,7 @@ interface Dao {
 
     @Query("SELECT phoneNumber FROM USERDB ")
     fun getUserId(): Flow<String>
+
+    @Query("UPDATE userDB SET name = :name, nationalCode = :nationalCode, address = :address WHERE phoneNumber = :phoneNumber")
+    suspend fun updateUserAccount(name: String, nationalCode: String, address: String, phoneNumber: String)
 }

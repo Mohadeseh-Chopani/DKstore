@@ -20,4 +20,12 @@ class ProfileRepositoryImp(val profileDataSourceImp: ProfileDataSourceImp): Prof
     override suspend fun addUserToDatabase(user: UserEntity): Long {
         return profileDataSourceImp.addUserToDatabase(user)
     }
+
+    override suspend fun updateUserAccount(name: String, nationalCode: String, address: String, phoneNumber: String) {
+        return profileDataSourceImp.updateUserAccount(name, nationalCode, address, phoneNumber)
+    }
+
+    override suspend fun deleteUserById(userId: String) {
+        return profileDataSourceImp.deleteUserById(userId)
+    }
 }

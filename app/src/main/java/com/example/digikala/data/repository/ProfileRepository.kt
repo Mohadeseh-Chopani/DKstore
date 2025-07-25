@@ -12,4 +12,8 @@ interface ProfileRepository {
 
     suspend fun addUserToDatabase(user: UserEntity): Long
 
+    suspend fun updateUserAccount(name: String, nationalCode: String, address: String, phoneNumber: String)
+
+    suspend fun deleteUserById(userId: String)
+
 }
