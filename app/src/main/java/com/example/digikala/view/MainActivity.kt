@@ -3475,7 +3475,6 @@ fun SearchItemDesign(product: ProductsItem) {
                 Image(
                     painter = rememberAsyncImagePainter(product.images.main),
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .height(itemHeight)
                         .fillMaxWidth()
