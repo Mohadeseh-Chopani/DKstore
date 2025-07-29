@@ -164,6 +164,7 @@ import com.example.digikala.databinding.ProductInfoSectionBinding
 import com.example.digikala.ui.theme.BackgroundColor
 import com.example.digikala.ui.theme.BackgroundMenuItemSelected
 import com.example.digikala.ui.theme.DarkGreen
+import com.example.digikala.ui.theme.DigikalaTheme
 import com.example.digikala.ui.theme.Green
 import com.example.digikala.ui.theme.IconColor
 import com.example.digikala.ui.theme.IconsUnSelected
@@ -208,23 +209,25 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val navController = rememberNavController()
-            CompositionLocalProvider(
-                LocalProvider.LocalProductViewModel provides productViewModel,
-                LocalProvider.LocalNavController provides navController,
-                LocalProvider.LocalCategoriesViewModel provides categoriesViewModel,
-                LocalProvider.LocalSearchViewModel provides searchViewModel,
-                LocalProvider.LocalShoppingCardViewModel provides shoppingCardViewModel,
-                LocalProvider.LocalProfileViewModel provides profileViewModel
-            ) {
-                Scaffold(
-                    modifier = Modifier
-                        .background(White)
-                        .fillMaxSize()
-                ) { innerPadding ->
-                    BaseStructure(
-                        modifier = Modifier.padding(innerPadding), homeViewModel
-                    )
+            DigikalaTheme {
+                val navController = rememberNavController()
+                CompositionLocalProvider(
+                    LocalProvider.LocalProductViewModel provides productViewModel,
+                    LocalProvider.LocalNavController provides navController,
+                    LocalProvider.LocalCategoriesViewModel provides categoriesViewModel,
+                    LocalProvider.LocalSearchViewModel provides searchViewModel,
+                    LocalProvider.LocalShoppingCardViewModel provides shoppingCardViewModel,
+                    LocalProvider.LocalProfileViewModel provides profileViewModel
+                ) {
+                    Scaffold(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        containerColor = Color.White
+                    ) { innerPadding ->
+                        BaseStructure(
+                            modifier = Modifier.padding(innerPadding), homeViewModel
+                        )
+                    }
                 }
             }
         }
@@ -236,14 +239,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
     val navController = LocalProvider.LocalNavController.current
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
             modifier = Modifier
                 .background(White)
-                .padding(top = 20.dp),
+                .padding(top = 14.dp),
             bottomBar = { BottomNavigationBar(navController, context = context) },
             topBar = {
                 val route = currentRoute(navController)
@@ -344,7 +346,6 @@ fun BaseStructure(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                     query?.let { SearchPage(it) }
                 }
                 composable(Const.SHOPPING_CART) { ShoppingCartPage() }
-//                composable(Const.PROFILE) { ProfilePage() }
                 composable(Const.PROFILE) { AccountPage() }
             }
         }
@@ -426,10 +427,7 @@ fun BottomNavigationBar(navController: NavController, context: Context) {
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomePage(homeViewModel: HomeViewModel) {
-    val scrollState = rememberScrollState()
     val homeState by homeViewModel.homeState.collectAsState()
-    val profileViewModel = LocalProvider.LocalProfileViewModel.current
-    val context = LocalContext.current
 
     val data: HomePageData
 
@@ -456,19 +454,22 @@ fun HomePage(homeViewModel: HomeViewModel) {
                     ImageSlider(
                         images = listOf(
                             MainBanner(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/cc0b184484350b13b34b793be1339d488a8ffa9a_1750078019.jpg?x-oss-process=image/quality,q_95/format,webp"
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/6e26ffb1409146c66323c6922f536e67dc85f749_1753358489.jpg?x-oss-process=image/quality,q_95/format,webp"
                             ),
                             MainBanner(
                                 "https://dkstatics-public.digikala.com/digikala-adservice-banners/1291440b2c6fdee179ff01d64bafd9b5183db62e_1748860407.gif?x-oss-process=image?x-oss-process=image/format,webp"
                             ),
                             MainBanner(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/be50523e20d11c8b09943e3be172a7c8f0b6c78c_1749629292.jpg?x-oss-process=image/quality,q_95/format,webp"
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/89efab84c23fcff32ff4d5aae5e9e0b0b65966af_1753197330.gif?x-oss-process=image?x-oss-process=image/format,webp"
                             ),
                             MainBanner(
                                 "https://dkstatics-public.digikala.com/digikala-adservice-banners/be2f58f5e1d8e49f38a053ead001fb745fe189b9_1750085414.jpg?x-oss-process=image/quality,q_95/format,webp"
                             ),
                             MainBanner(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/b970037e9eff15704bdc43b7bcf1cfbbd53e0d60_1749290938.jpg?x-oss-process=image/quality,q_95/format,webp"
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/b69f5454f14b538e95992a3fa36e39e1081a4375_1753285527.jpg?x-oss-process=image/quality,q_95/format,webp"
+                            ),
+                            MainBanner(
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/181f9d328d5f30563400d206d2d9a0b24f8894c6_1753272068.gif?x-oss-process=image?x-oss-process=image/format,webp"
                             )
                         ),
                         5000,
@@ -529,7 +530,7 @@ fun HomePage(homeViewModel: HomeViewModel) {
 
                         images = listOf(
                             MainBanner(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/3e2b31e7d697aa2724d85e0fc4b758ab702662e8_1742026574.jpg?x-oss-process=image/quality,q_95/format,webp"
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/1d06d8497571cf7277cb015266f88710beddf72d_1752493561.jpg?x-oss-process=image/quality,q_95/format,webp"
                             )
                         ),
                         5000, true
@@ -574,7 +575,7 @@ fun HomePage(homeViewModel: HomeViewModel) {
 
                         images = listOf(
                             MainBanner(
-                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/7b5b9b8e19e407f4df329cef5ef2b35700ce7144_1742027906.jpg?x-oss-process=image/quality,q_95/format,webp"
+                                "https://dkstatics-public.digikala.com/digikala-adservice-banners/4cdbf0a119a2533845a71579bd76c69e4d71d50c_1753246787.jpg?x-oss-process=image/quality,q_95/format,webp"
                             )
                         ),
                         5000, true
@@ -691,13 +692,6 @@ fun HomePage(homeViewModel: HomeViewModel) {
     } else if (homeState.error != null) {
 
     }
-
-    var images = listOf(
-        R.drawable.ic_launcher_background,
-        R.drawable.ic_launcher_background,
-        R.drawable.ic_launcher_background,
-        R.drawable.ic_launcher_background
-    )
 }
 
 @RequiresApi(Build.VERSION_CODES.P)
@@ -805,7 +799,7 @@ fun productSliderTrending(
             Text(
                 text = titleHeader,
                 style = MaterialTheme.typography.headlineMedium,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = Color.Black,
@@ -862,7 +856,7 @@ fun productSliderTrending(
                                     text = products[i].title_fa,
                                     color = Color.Black,
                                     textAlign = TextAlign.Start,
-                                    fontSize = 14.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Normal,
                                     fontFamily = MyCustomFont,
                                     maxLines = 2,
@@ -903,7 +897,7 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
                 style = MaterialTheme.typography.headlineMedium,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 color = Color.Black,
                 maxLines = 1,
             )
@@ -959,7 +953,7 @@ fun productSliderSellingAndSales(titleHeader: String, products: List<Product2>) 
                                     color = Color.Black,
                                     textAlign = TextAlign.Start,
                                     fontFamily = MyCustomFont,
-                                    fontSize = 14.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Normal,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
@@ -1073,7 +1067,7 @@ fun ProductItemInHomePage(
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
                 maxLines = 2,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -1099,7 +1093,7 @@ fun ProductItemInHomePage(
                                 color = White,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = MyCustomFont,
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 modifier = Modifier
                                     .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1113,7 +1107,7 @@ fun ProductItemInHomePage(
                                 text = ConvertNumbers.convertToPersianDigits(
                                     ConvertNumbers.convertRialToToman(it.toString())
                                 ),
-                                fontSize = 14.sp,
+                                fontSize = 12.sp,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
                                 style = MaterialTheme.typography.bodySmall.copy(
@@ -1133,7 +1127,7 @@ fun ProductItemInHomePage(
                             ConvertNumbers.convertRialToToman(price.toString())
                         )
                     } تومان ",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Normal,
                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -1152,7 +1146,7 @@ fun RowProductList1(result: Home1) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1168,7 +1162,7 @@ fun RowProductList1(result: Home1) {
             Text(
                 text = result.title,
                 fontFamily = MyCustomFont,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
 
@@ -1176,11 +1170,13 @@ fun RowProductList1(result: Home1) {
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
-                modifier = Modifier.clickable {
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .clickable {
                     showMoreAction(result.title, searchViewModel)
                     navController.navigate(Const.SHOW_MORE + "/${result.title}")
                 }
@@ -1217,7 +1213,7 @@ fun RowProductList2(result: Home2) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1233,14 +1229,14 @@ fun RowProductList2(result: Home2) {
             Text(
                 text = result.title,
                 fontFamily = MyCustomFont,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
             val navController = LocalProvider.LocalNavController.current
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1282,7 +1278,7 @@ fun RowProductList3(result: Home3) {
     var counter = remember { mutableStateOf(1) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1298,14 +1294,14 @@ fun RowProductList3(result: Home3) {
             Text(
                 text = result.title,
                 fontFamily = MyCustomFont,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
             val navController = LocalProvider.LocalNavController.current
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1346,7 +1342,7 @@ fun RowProductList4(result: Home4) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1363,13 +1359,13 @@ fun RowProductList4(result: Home4) {
                 text = result.title,
                 fontWeight = FontWeight.Medium,
                 fontFamily = MyCustomFont,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
             )
             val navController = LocalProvider.LocalNavController.current
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1410,7 +1406,7 @@ fun RowProductList5(result: Home5) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1425,7 +1421,7 @@ fun RowProductList5(result: Home5) {
         ) {
             Text(
                 text = result.title,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium
             )
@@ -1433,7 +1429,7 @@ fun RowProductList5(result: Home5) {
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1474,7 +1470,7 @@ fun RowProductList6(result: Home6) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1491,13 +1487,13 @@ fun RowProductList6(result: Home6) {
                 text = result.title,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
             )
             val navController = LocalProvider.LocalNavController.current
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1538,7 +1534,7 @@ fun RowProductList7(result: Home7) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1555,13 +1551,13 @@ fun RowProductList7(result: Home7) {
                 text = result.title,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
             )
             val navController = LocalProvider.LocalNavController.current
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1602,7 +1598,7 @@ fun RowProductList8(result: Home8) {
     val searchViewModel = getSearchViewModelInstance()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.45f
-    val itemHeight = screenWidth * 0.68f
+    val itemHeight = screenWidth * 0.70f
 
     Column(
         modifier = Modifier
@@ -1619,13 +1615,13 @@ fun RowProductList8(result: Home8) {
                 text = result.title,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
             )
             val navController = LocalProvider.LocalNavController.current
             Text(
                 text = "مشاهده همه",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryColor,
@@ -1763,7 +1759,7 @@ fun searchBox() {
                 text = "جستجو کالا",
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
-                style = TextStyle(fontSize = 14.sp, color = White)
+                style = TextStyle(fontSize = 12.sp, color = White)
             )
         }
     }
@@ -1784,18 +1780,13 @@ fun ProductDetails() {
                 CircularProgressIndicator(color = PrimaryColor)
             }
         }
-
         is NetworkState.Success -> {
             data = (productData.value as NetworkState.Success<ProductPageData>).data
             ProductPageDesign(data)
         }
-
         is NetworkState.UnSuccess -> {
-
         }
-
         is NetworkState.Failure -> {
-
         }
     }
 }
@@ -1886,7 +1877,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
                         color = colorInt,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         modifier = Modifier
                             .padding(vertical = 8.dp)
                     )
@@ -1949,7 +1940,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                             color = White,
                             fontWeight = FontWeight.Medium,
                             fontFamily = MyCustomFont,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             modifier = Modifier
                                 .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1963,7 +1954,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                             fontFamily = MyCustomFont,
                             color = Color.Gray,
                             textDecoration = TextDecoration.LineThrough,
-                            fontSize = 14.sp
+                            fontSize = 12.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -1975,7 +1966,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                         } تومان ",
                         fontWeight = FontWeight.Normal,
                         fontFamily = MyCustomFont,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         color = Color.Black
                     )
                 } else {
@@ -1988,7 +1979,7 @@ fun BottomBar(modifier: Modifier = Modifier, data: ProductPageData) {
                         } تومان ",
                         fontWeight = FontWeight.Normal,
                         fontFamily = MyCustomFont,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         color = Color.Black
                     )
                 }
@@ -2058,7 +2049,7 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
                     color = LightBlue,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
 
                 Text(
@@ -2066,7 +2057,7 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
                         .padding(horizontal = 4.dp),
                     text = "/",
                     color = Color.DarkGray,
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
 
                 Text(
@@ -2075,14 +2066,14 @@ fun ProductInformation(productInformation: ProductPageData, moveOnItemClick: () 
                     textAlign = TextAlign.Right,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
             }
 
             Text(
                 text = productInformation.result.product.title_fa,
                 color = Color.Black,
-                fontSize = 20.sp,
+                fontSize = 16.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
@@ -2150,7 +2141,7 @@ fun ProductActionsRow(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
             Text(
                 text = "(امتیاز ${formatNumberToPersian(ratingCount)} خریدار)",
@@ -2222,7 +2213,7 @@ fun UserActionButton(title: String, onClick: () -> Unit) {
                 title,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
             )
@@ -2253,13 +2244,13 @@ fun ProductColorList(colorData: ProductPageData) {
         Row {
             Text(
                 text = "رنگ:",
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Medium
             )
             Text(
                 text = filteredVariants.get(0).color.title_fa,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal
             )
@@ -2327,13 +2318,13 @@ fun ProductSpecificationsButton(title: String, feature: String) {
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .padding(bottom = 2.dp),
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = Color.DarkGray
             )
 
             Text(
                 feature,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = Color.Black,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
@@ -2382,7 +2373,7 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = provider.title,
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
                                 color = Color.Gray,
@@ -2407,7 +2398,7 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = provider.title,
-                                    fontSize = 13.sp,
+                                    fontSize = 12.sp,
                                     color = Color.Gray,
                                     fontFamily = MyCustomFont,
                                     fontWeight = FontWeight.Normal
@@ -2437,7 +2428,7 @@ fun ProductInfoXmlView(sellerData: ProductPageData) {
                     ) {
                         Text(
                             text = "مشخصات فنی",
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             color = Color.Black,
                             fontFamily = MyCustomFont,
                             fontWeight = FontWeight.Normal
@@ -2522,7 +2513,7 @@ fun SimilarProductItemInProductPage(
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
                 maxLines = 2,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -2589,7 +2580,7 @@ fun SimilarProductItemInProductPage(
                                 color = White,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 modifier = Modifier
                                     .align(Alignment.Center)
                             )
@@ -2603,7 +2594,7 @@ fun SimilarProductItemInProductPage(
                             text = ConvertNumbers.convertToPersianDigits(
                                 ConvertNumbers.convertRialToToman(it.toString())
                             ),
-                            fontSize = 14.sp,
+                            fontSize = 12.sp,
                             fontFamily = MyCustomFont,
                             fontWeight = FontWeight.Normal,
                             style = MaterialTheme.typography.bodySmall.copy(
@@ -2623,7 +2614,7 @@ fun SimilarProductItemInProductPage(
                         ConvertNumbers.convertRialToToman(price.toString())
                     )
                 } تومان ",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
                 style = MaterialTheme.typography.bodyLarge.copy(
@@ -2714,7 +2705,7 @@ fun SectionTitle(title: String) {
         text = title,
         fontFamily = MyCustomFont,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
+        fontSize = 14.sp,
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
             .fillMaxWidth(),
@@ -2747,7 +2738,7 @@ fun ReviewItem(review: LatestComment) {
                         text = review.user_name,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = Color.DarkGray,
                         textAlign = TextAlign.End,
                         modifier = Modifier.padding(start = 8.dp, end = 8.dp)
@@ -2763,7 +2754,7 @@ fun ReviewItem(review: LatestComment) {
                             color = DarkGreen,
                             textAlign = TextAlign.Center,
                             fontFamily = MyCustomFont,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
                         )
                     }
@@ -2785,7 +2776,7 @@ fun ReviewItem(review: LatestComment) {
                 Text(
                     text = review.body,
                     textAlign = TextAlign.Right,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     maxLines = 3,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Normal,
@@ -2836,7 +2827,7 @@ fun QuestionItem(question: LatestQuestion) {
                     Text(
                         text = question.text,
                         textAlign = TextAlign.Right,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         maxLines = 3,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
@@ -2851,7 +2842,7 @@ fun QuestionItem(question: LatestQuestion) {
                         text = "پاسخ: ${question.last_answer?.text}",
                         textAlign = TextAlign.Right,
                         color = Color.Gray,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         maxLines = 2,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
@@ -2935,7 +2926,7 @@ fun AttributesDesign(attributes: DetailSection) {
                 ) {
                     Text(
                         text = item.title,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = Color.DarkGray,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Medium,
@@ -2946,7 +2937,7 @@ fun AttributesDesign(attributes: DetailSection) {
 
                     Text(
                         text = item.values.toString(),
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = Color.Black,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
@@ -3151,6 +3142,8 @@ fun CategoriesPageDesign(categoriesData: CategoriesData) {
 fun ExpandableMenuItem(title: String, itemData: Children) {
     var expanded by remember { mutableStateOf(false) }
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "")
+    val searchViewModel = LocalProvider.LocalSearchViewModel.current
+    val navController = LocalProvider.LocalNavController.current
 
     Column(modifier = Modifier
         .fillMaxWidth()
@@ -3206,6 +3199,12 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
                                         .fillMaxWidth()
                                         .clickable {
                                             Log.d("MOX", "Clicked on grandchild: ${it.title}")
+                                            searchViewModel.isLoading = false
+                                            searchViewModel.isLastPage = false
+                                            searchViewModel.currentPage = 1
+                                            searchViewModel.cachedProducts.clear()
+                                            navController.navigate("${Const.SEARCH}/${grandChild.title}")
+                                            grandChild.title?.let { searchViewModel.getSearchData(it) }
                                         }
                                         .padding(8.dp)
                                 ) {
@@ -3291,14 +3290,19 @@ fun SearchPage(query: String) {
 
     val shouldLoadMore by remember {
         derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val lastVisibleItem =
+                listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val totalItems = listState.layoutInfo.totalItemsCount
             totalItems > 0 && lastVisibleItem >= totalItems - 4
         }
     }
 
     LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore && !searchViewModel.isLoading && !searchViewModel.isLastPage) {
+        if (
+            shouldLoadMore &&
+            !searchViewModel.isLoading &&
+            !searchViewModel.isLastPage
+            ) {
             searchViewModel.getSearchData(query)
         }
     }
@@ -3442,7 +3446,7 @@ fun SearchItemDesign(product: ProductsItem) {
 
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val itemWidth = screenWidth * 0.23f
-    val itemHeight = screenWidth * 0.25f
+    val itemHeight = screenWidth * 0.28f
 
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -3504,6 +3508,7 @@ fun SearchItemDesign(product: ProductsItem) {
                     text = product.title_fa,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -3526,7 +3531,7 @@ fun SearchItemDesign(product: ProductsItem) {
                                 text = formatNumberToPersian(it),
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
-                                fontSize = 14.sp,
+                                fontSize = 12.sp,
                                 modifier = Modifier.padding(start = 4.dp)
                             )
                         }
@@ -3554,7 +3559,7 @@ fun SearchItemDesign(product: ProductsItem) {
                                     textDecoration = TextDecoration.LineThrough,
                                     color = Color.Gray
                                 ),
-                                fontSize = 14.sp
+                                fontSize = 12.sp
                             )
                         }
 
@@ -3566,7 +3571,7 @@ fun SearchItemDesign(product: ProductsItem) {
                             } تومان ",
                             fontFamily = MyCustomFont,
                             fontWeight = FontWeight.Normal,
-                            fontSize = 16.sp
+                            fontSize = 14.sp
                         )
                     }
 
@@ -3582,7 +3587,7 @@ fun SearchItemDesign(product: ProductsItem) {
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = MyCustomFont,
                                 textAlign = TextAlign.Center,
-                                fontSize = 14.sp,
+                                fontSize = 12.sp,
                                 modifier = Modifier
                                     .background(
                                         PrimaryColor,
@@ -3734,11 +3739,11 @@ fun showMoreItem(allProducts: ProductsItem) {
                 modifier = Modifier
                     .padding(horizontal = 6.dp),
                 text = allProducts.title_fa,
-                textAlign = TextAlign.End,
+                textAlign = TextAlign.Start,
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Normal,
                 maxLines = 2,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -3766,7 +3771,7 @@ fun showMoreItem(allProducts: ProductsItem) {
                                 color = White,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = MyCustomFont,
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 modifier = Modifier
                                     .background(PrimaryColor, shape = RoundedCornerShape(4.dp))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -3780,7 +3785,7 @@ fun showMoreItem(allProducts: ProductsItem) {
                                 text = ConvertNumbers.convertToPersianDigits(
                                     ConvertNumbers.convertRialToToman(allProducts.price.rrp_price.toString())
                                 ),
-                                fontSize = 14.sp,
+                                fontSize = 12.sp,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
                                 style = MaterialTheme.typography.bodySmall.copy(
@@ -3801,7 +3806,7 @@ fun showMoreItem(allProducts: ProductsItem) {
                             ConvertNumbers.convertRialToToman(allProducts.price.selling_price.toString())
                         )
                     } تومان ",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = MyCustomFont,
                     textAlign = TextAlign.Start,
                     fontWeight = FontWeight.Normal,
@@ -4002,7 +4007,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
                     Text(
                         text = it.title,
                         color = PrimaryColor,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -4019,7 +4024,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
             ) {
                 Text(
                     text = product.title_fa,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = MyCustomFont,
                     maxLines = 2,
                     fontWeight = FontWeight.Normal,
@@ -4035,7 +4040,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
                     )
                     Text(
                         text = product.variants.get(0).warranty.title_fa,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
                         color = Color.DarkGray,
@@ -4052,7 +4057,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
                     )
                     Text(
                         text = product.variants.get(0).seller.title_fa,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Normal,
                         color = Color.DarkGray,
@@ -4070,7 +4075,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
                         )
                         Text(
                             text = it.title,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontFamily = MyCustomFont,
                             fontWeight = FontWeight.Normal,
                             color = Color.DarkGray,
@@ -4090,7 +4095,7 @@ fun productItemInshoppingCard(data: List<ShoppingCardEntity>, index: Int) {
                             )
                             Text(
                                 text = it.title,
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal,
                                 color = Color.DarkGray,
@@ -4286,7 +4291,7 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<Shopping
                         fontWeight = FontWeight.Normal,
                         fontFamily = MyCustomFont,
                         color = Color.Gray,
-                        fontSize = 14.sp
+                        fontSize = 12.sp
                     )
 //                    }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -4311,7 +4316,7 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<Shopping
                         } تومان ",
                         fontWeight = FontWeight.Normal,
                         fontFamily = MyCustomFont,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         color = Color.Black
                     )
 //                }
@@ -4324,20 +4329,16 @@ fun ShoppingCardPageBottomBar(modifier: Modifier = Modifier, data: List<Shopping
 @Composable
 fun AccountPage() {
     val profileViewModel = LocalProvider.LocalProfileViewModel.current
-
     val isLoggedIn by profileViewModel.isUserLoggedIn.collectAsState()
-
     when (isLoggedIn) {
         null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
-
         true -> {
             ProfilePage()
         }
-
         false -> {
             LoginPage()
         }
@@ -4372,7 +4373,7 @@ fun ProfilePage() {
                 Text(
                     text = "پروفایل شما :",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     textAlign = TextAlign.Right
                 )
 
@@ -4473,12 +4474,12 @@ fun LogoutConfirmationDialog(
                                 contentDescription = "بستن دیالوگ",
                             )
                         }
-                        Text(
-                            text = "از حساب کاربری خارج می‌شوید؟",
-                            fontFamily = MyCustomFont,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+//                        Text(
+//                            text = "از حساب کاربری خارج می‌شوید؟",
+//                            fontFamily = MyCustomFont,
+//                            fontWeight = FontWeight.Medium,
+//                            modifier = Modifier.align(Alignment.Center)
+//                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -4748,12 +4749,10 @@ fun LoginPage() {
             RegistrationState.SUCCESS -> {
                 profileViewModel.resetRegistrationState()
             }
-
             RegistrationState.USER_EXISTS -> {
                 Toast.makeText(context, "با این شماره قبلا ثبت نام کرده‌اید!", Toast.LENGTH_LONG).show()
                 profileViewModel.resetRegistrationState()
             }
-
             else -> {
                 // برای وضعیت‌های IDLE و LOADING کاری انجام نمی‌دهیم
             }
