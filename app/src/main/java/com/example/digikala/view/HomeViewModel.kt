@@ -29,7 +29,7 @@ class HomeViewModel(val homeRepositoryImp: HomeRepositoryImp) : ViewModel() {
                 .map<HomePageData, NetworkState<HomePageData>> { NetworkState.Success(it) }
                 .onStart { emit(NetworkState.Loading) }
                 .catch { emit(NetworkState.Failure(it)) }
-                .map { networkState -> // این map دوم برای تبدیل NetworkState به UiState است
+                .map { networkState ->
                     when (networkState) {
                         is NetworkState.Loading -> HomeScreenState(isLoading = true)
                         is NetworkState.Success -> HomeScreenState(homeData = networkState.data)

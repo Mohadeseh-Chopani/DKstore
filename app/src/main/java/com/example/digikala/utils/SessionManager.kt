@@ -14,15 +14,11 @@ class SessionManager(private val context: Context) {
     companion object {
         val USER_ID_KEY = stringPreferencesKey("current_user_id")
     }
-
-    // این تابع را بعد از لاگین موفق صدا بزنید
     suspend fun saveUserId(id: String) {
         context.dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = id
         }
     }
-
-    // ViewModel از این Flow برای خواندن خودکار شناسه استفاده می‌کند
     val getUserIdFlow: Flow<String?> = context.dataStore.data
         .map { preferences ->
             preferences[USER_ID_KEY]

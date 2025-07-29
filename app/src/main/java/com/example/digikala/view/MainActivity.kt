@@ -1177,9 +1177,9 @@ fun RowProductList1(result: Home1) {
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .clickable {
-                    showMoreAction(result.title, searchViewModel)
-                    navController.navigate(Const.SHOW_MORE + "/${result.title}")
-                }
+                        showMoreAction(result.title, searchViewModel)
+                        navController.navigate(Const.SHOW_MORE + "/${result.title}")
+                    }
             )
         }
 
@@ -1780,12 +1780,15 @@ fun ProductDetails() {
                 CircularProgressIndicator(color = PrimaryColor)
             }
         }
+
         is NetworkState.Success -> {
             data = (productData.value as NetworkState.Success<ProductPageData>).data
             ProductPageDesign(data)
         }
+
         is NetworkState.UnSuccess -> {
         }
+
         is NetworkState.Failure -> {
         }
     }
@@ -3302,7 +3305,7 @@ fun SearchPage(query: String) {
             shouldLoadMore &&
             !searchViewModel.isLoading &&
             !searchViewModel.isLastPage
-            ) {
+        ) {
             searchViewModel.getSearchData(query)
         }
     }
@@ -4336,9 +4339,11 @@ fun AccountPage() {
                 CircularProgressIndicator()
             }
         }
+
         true -> {
             ProfilePage()
         }
+
         false -> {
             LoginPage()
         }
@@ -4749,10 +4754,12 @@ fun LoginPage() {
             RegistrationState.SUCCESS -> {
                 profileViewModel.resetRegistrationState()
             }
+
             RegistrationState.USER_EXISTS -> {
                 Toast.makeText(context, "با این شماره قبلا ثبت نام کرده‌اید!", Toast.LENGTH_LONG).show()
                 profileViewModel.resetRegistrationState()
             }
+
             else -> {
                 // برای وضعیت‌های IDLE و LOADING کاری انجام نمی‌دهیم
             }

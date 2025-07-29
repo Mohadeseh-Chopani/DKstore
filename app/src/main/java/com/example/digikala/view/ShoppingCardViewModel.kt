@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 class ShoppingCardViewModel(
     val shoppingCardRepositoryImp: ShoppingCardRepositoryImp,
     private val sessionManager: SessionManager
-): ViewModel() {
+) : ViewModel() {
 
     var isLogin = false
     fun isLogin(login: Boolean) {
@@ -57,27 +57,23 @@ class ShoppingCardViewModel(
     }
 
 
-    fun updateProductCount(productId: Long, newCount: Int){
+    fun updateProductCount(productId: Long, newCount: Int) {
         viewModelScope.launch {
             shoppingCardRepositoryImp.updateProductCount(productId, newCount)
         }
     }
 
-    // این StateFlow همیشه سبد خرید کاربر لاگین‌کرده را نمایش می‌دهد
     val shoppingCartItems: StateFlow<List<ShoppingCardEntity>> =
-        // ۱. ابتدا به شناسه‌ی کاربر ذخیره شده در DataStore گوش می‌دهیم
         sessionManager.getUserIdFlow
             .flatMapLatest { userId ->
                 if (userId == null) {
-                    // ۲. اگر کاربری لاگین نکرده بود، یک لیست خالی برمی‌گردانیم
                     flowOf(emptyList())
                 } else {
-                    // ۳. اگر کاربر لاگین کرده بود، سبد خرید او را از دیتابیس Room می‌گیریم
                     shoppingCardRepositoryImp.getProductsList(userId)
                 }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = emptyList() // مقدار اولیه یک لیست خالی است
+                initialValue = emptyList()
             )
 }

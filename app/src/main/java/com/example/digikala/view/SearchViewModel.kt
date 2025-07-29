@@ -1,7 +1,11 @@
 package com.example.digikala.view
 
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.digikala.data.models.product.Product
@@ -15,11 +19,13 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
-class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp): ViewModel() {
+class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp) : ViewModel() {
 
     var currentPage = 1
     var isLoading = false
     var isLastPage = false
+
+    var searchText = ""
 
     val cachedProducts = mutableStateListOf<ProductsItem>()
 
@@ -30,6 +36,8 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp): ViewModel()
         if (isLoading || isLastPage) return
 
         isLoading = true
+
+        searchText = query
 
         viewModelScope.launch {
             searchRepositoryImp.getSearchData(query, currentPage)
@@ -57,7 +65,7 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp): ViewModel()
                         )
 
                         _searchData.value = NetworkState.Success(updatedSearchData)
-                        Log.i("MOX", "getSearchData: "+ updatedSearchData.result?.products?.size)
+                        Log.i("MOX", "getSearchData: " + updatedSearchData.result?.products?.size)
                         response.result?.products?.mapNotNull { it as? ProductsItem }?.let {
                             cachedProducts.addAll(it)
                         }
