@@ -3306,7 +3306,7 @@ fun SearchPage(query: String) {
             !searchViewModel.isLoading &&
             !searchViewModel.isLastPage
         ) {
-            searchViewModel.getSearchData(query)
+            searchViewModel.getSearchData(searchViewModel.searchText)
         }
     }
 
