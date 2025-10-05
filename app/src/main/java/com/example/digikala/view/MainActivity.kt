@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterialApi::class)
+@file:OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 
 package com.example.digikala.view
 
@@ -46,7 +46,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -54,11 +53,14 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.TabRowDefaults.Divider
+import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -76,12 +78,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -160,8 +164,8 @@ import com.example.digikala.data.models.product.ProductBadge2
 import com.example.digikala.data.models.product.ProductPageData
 import com.example.digikala.data.models.search.ProductsItem
 import com.example.digikala.data.models.search.SearchData
+import com.example.digikala.data.models.search.SearchFilter
 import com.example.digikala.databinding.ProductInfoSectionBinding
-import com.example.digikala.ui.theme.BackgroundColor
 import com.example.digikala.ui.theme.BackgroundMenuItemSelected
 import com.example.digikala.ui.theme.DarkGreen
 import com.example.digikala.ui.theme.DigikalaTheme
@@ -2990,7 +2994,9 @@ fun CategoriesPage() {
         is NetworkState.Success -> {
             val data = (categoriesData.value as NetworkState.Success<CategoriesData>).data
 //            Log.e("MOX", "CategoriesPageDesign: " +data.icons)
-            CategoriesPageDesign(data)
+            data?.let {
+                CategoriesPageDesign(it)
+            }
         }
 
         is NetworkState.UnSuccess -> {
@@ -3148,14 +3154,15 @@ fun ExpandableMenuItem(title: String, itemData: Children) {
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
     val navController = LocalProvider.LocalNavController.current
 
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-            if (!itemData.children.isNullOrEmpty()) {
-                expanded = !expanded
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (!itemData.children.isNullOrEmpty()) {
+                    expanded = !expanded
+                }
             }
-        }
-        .padding(16.dp)) {
+            .padding(16.dp)) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -3269,20 +3276,26 @@ fun searchBoxInSearchPage() {
                     .padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CustomOutlinedTextField { query ->
-                    coroutineScope.launch {
+                CustomOutlinedTextField(
+                    onSearch = { query ->
+                        coroutineScope.launch {
 //                        onSearchStarted()
-                        searchViewModel.isLoading = false
-                        searchViewModel.isLastPage = false
-                        searchViewModel.currentPage = 1
-                        searchViewModel.getSearchData(query)
-                    }
-                }
+                            searchViewModel.isLoading = false
+                            searchViewModel.isLastPage = false
+                            searchViewModel.currentPage = 1
+                            searchViewModel.cachedProducts.clear()
+                            searchViewModel.getSearchData(query)
+                        }
+                    },
+                    "جستجو در همه کالاها",
+                    Const.searchType.MAIN_SEARCH_BOX
+                )
             }
         }
     }
 }
 
+@Preview
 @Composable
 fun SearchPage(query: String) {
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
@@ -3290,6 +3303,7 @@ fun SearchPage(query: String) {
     var hasSearched by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val showBottomLoader = remember { mutableStateOf(false) }
+    val filters by searchViewModel.filters.collectAsState()
 
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -3332,6 +3346,21 @@ fun SearchPage(query: String) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+        LazyRow(Modifier.padding(top = 12.dp)) {
+            filters?.let {
+
+                item {
+                    filterItemDesign(
+                        SearchFilter("filters", "فیلتر", null)
+                    )
+                }
+
+                items(it.size) { index ->
+                    filterItemDesign(it.get(index))
+                }
+            }
+        }
+
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -3355,7 +3384,9 @@ fun SearchPage(query: String) {
             }
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 54.dp)
             ) {
                 products
                     ?.filterIsInstance<ProductsItem>()
@@ -3400,25 +3431,172 @@ fun SearchPage(query: String) {
     }
 }
 
+@Preview
 @Composable
-fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
+fun filterItemDesign(item: SearchFilter) {
+    var openBottomSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 4.dp, vertical = 8.dp)
+            .background(color = White, shape = RoundedCornerShape(10.dp))
+            .border(0.5.dp, color = Color.LightGray, shape = RoundedCornerShape(10.dp))
+            .clickable {
+                openBottomSheet = true
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Log.d("MOX", "title: " + item.title)
+        Log.i("MOX", "type: " + item.type)
+
+        item?.title?.let {
+            Text(
+                text = it,
+                fontFamily = MyCustomFont,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+                    .then(
+                        if (item.type != "switch") {
+                            Modifier.padding(end = 4.dp)
+                        } else {
+                            Modifier.padding(end = 8.dp)
+                        }
+                    )
+            )
+        }
+
+        if (item.type != "switch") {
+            Icon(
+                Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(end = 4.dp)
+            )
+        }
+    }
+
+    if (openBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { openBottomSheet = false },
+            sheetState = sheetState
+        ) {
+            item.options?.let { options ->
+                for (children in options) {
+                    choiceFilterCheckBoxType(item)
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun choiceFilterCheckBoxType(items: SearchFilter) {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier,
+            horizontalArrangement = Arrangement.Absolute.SpaceEvenly
+        ) {
+            Text(
+                text = items.title,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp
+            )
+
+            Icon(Icons.Default.Close, contentDescription = null)
+        }
+
+        CustomOutlinedTextField(
+            onSearch = { query ->
+
+            },
+            "جستجودر${items.title}",
+            Const.searchType.FILTERS_SEARCH_BOX
+        )
+
+        LazyColumn {
+            items.options?.size?.let {size ->
+                items(size) {index ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Checkbox(
+                            checked = items.options.get(index).isSelected.value,
+                            onCheckedChange = { items.options.get(index).isSelected.value = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = PrimaryColor,
+                                uncheckedColor = Color.Gray,
+                                checkmarkColor = Color.White
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        items.options?.get(index)?.let { it1 ->
+                            Text(
+                                text = it1?.titleFa!!,
+                                fontFamily = MyCustomFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomOutlinedTextField(onSearch: ((String) -> Unit)?, searchDescription: String, useCase: String) {
     var searchText by remember { mutableStateOf("") }
     val searchViewModel = LocalProvider.LocalSearchViewModel.current
+
+    val colors: TextFieldColors = when (useCase) {
+        Const.searchType.MAIN_SEARCH_BOX -> {
+            TextFieldDefaults.outlinedTextFieldColors(
+                textColor = Color.DarkGray,
+                cursorColor = Color.Blue,
+                focusedBorderColor = PrimaryColor,
+                unfocusedBorderColor = Color.Gray,
+                focusedLabelColor = PrimaryColor,
+                unfocusedLabelColor = Color.Gray,
+                placeholderColor = Color.DarkGray
+            )
+        }
+
+        Const.searchType.FILTERS_SEARCH_BOX -> {
+            TextFieldDefaults.outlinedTextFieldColors(
+                textColor = Color.DarkGray,
+                cursorColor = Color.Blue,
+                focusedBorderColor = Color.Gray,
+                unfocusedBorderColor = Color.Gray,
+                focusedLabelColor = Color.Gray,
+                unfocusedLabelColor = Color.Gray,
+                placeholderColor = Color.DarkGray
+            )
+        }
+
+        else -> {
+            TextFieldDefaults.outlinedTextFieldColors()
+        }
+    }
+
 
     OutlinedTextField(
         value = searchText,
         onValueChange = { newText -> searchText = newText },
-        label = { Text("جستجو در همه کالاها") },
+        label = { Text(searchDescription) },
         singleLine = true,
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            textColor = Color.DarkGray,
-            cursorColor = Color.Blue,
-            focusedBorderColor = PrimaryColor,
-            unfocusedBorderColor = Color.Gray,
-            focusedLabelColor = PrimaryColor,
-            unfocusedLabelColor = Color.Gray,
-            placeholderColor = Color.DarkGray
-        ),
+        colors = colors,
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp),
@@ -3426,12 +3604,7 @@ fun CustomOutlinedTextField(onSearch: (String) -> Unit) {
             if (searchText.isNotEmpty()) {
                 IconButton(
                     onClick = {
-                        onSearch(searchText)
-
-                        searchViewModel.isLoading = false
-                        searchViewModel.isLastPage = false
-                        searchViewModel.currentPage = 1
-                        searchViewModel.cachedProducts.clear()
+                        onSearch?.let { it(searchText) }
                     },
                     modifier = Modifier
                 ) {

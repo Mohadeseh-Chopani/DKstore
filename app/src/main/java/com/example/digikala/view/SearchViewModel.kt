@@ -1,14 +1,12 @@
 package com.example.digikala.view
 
-import android.util.Log
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.digikala.data.models.product.Product
+import com.example.digikala.data.models.search.SearchFilter
+import com.example.digikala.data.models.search.FilterOption
+import com.example.digikala.data.models.search.Filters
 import com.example.digikala.data.models.search.ProductsItem
 import com.example.digikala.data.models.search.SearchData
 import com.example.digikala.data.repository.SearchRepositoryImp
@@ -28,6 +26,10 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp) : ViewModel(
     var searchText = ""
 
     val cachedProducts = mutableStateListOf<ProductsItem>()
+
+    var _filters = MutableStateFlow<List<SearchFilter>?>(emptyList())
+    val filters: StateFlow<List<SearchFilter>?> get() = _filters
+
 
     val _searchData = MutableStateFlow<NetworkState<SearchData>>(NetworkState.Loading)
     val searchData: StateFlow<NetworkState<SearchData>> get() = _searchData
@@ -54,6 +56,7 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp) : ViewModel(
                         response.result?.products?.mapNotNull { it as? ProductsItem }?.let {
                             cachedProducts.addAll(it)
                         }
+                        _filters.value = response.result?.filters?.toUnifiedGroups()
                     } else {
                         val currentProducts =
                             (_searchData.value as? NetworkState.Success)?.data?.result?.products ?: emptyList()
@@ -65,7 +68,11 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp) : ViewModel(
                         )
 
                         _searchData.value = NetworkState.Success(updatedSearchData)
-                        Log.i("MOX", "getSearchData: " + updatedSearchData.result?.products?.size)
+                        _filters.value = response.result?.filters?.toUnifiedGroups()
+//
+//                        Log.d("MOX", "getSearchData: "+ _filters.value?.size)
+//
+//                        Log.i("MOX", "getSearchData: " + updatedSearchData.result?.products?.size)
                         response.result?.products?.mapNotNull { it as? ProductsItem }?.let {
                             cachedProducts.addAll(it)
                         }
@@ -81,4 +88,165 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp) : ViewModel(
                 }
         }
     }
+
+
+    fun Filters.toUnifiedGroups(): List<SearchFilter> {
+        val groups = mutableListOf<SearchFilter>()
+
+        categories?.let { cat ->
+            groups += SearchFilter(
+                type = cat.type.orEmpty(),
+                title = cat.title.orEmpty(),
+                options = cat.options?.map { opt ->
+                    FilterOption(
+                        id = opt.id.toString(),
+                        titleFa = opt.title_fa.orEmpty(),
+                        titleEn = opt.title_en,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        brands?.let { br ->
+            groups += SearchFilter(
+                type = br.type.orEmpty(),
+                title = br.title.orEmpty(),
+                options = br.options?.map { opt ->
+                    FilterOption(
+                        id = opt.id.toString(),
+                        titleFa = opt.title_fa.orEmpty(),
+                        titleEn = opt.title_en,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        price?.let { pr ->
+            groups += SearchFilter(
+                type = pr.type.orEmpty(),
+                title = pr.title.orEmpty(),
+                options = listOf(
+                    FilterOption(
+                        id = "price",
+                        titleFa = "حداکثر: ${pr.options?.max ?: 0}",
+                        titleEn = null,
+                        isSelected = mutableStateOf(false)
+                    )
+                )
+            )
+        }
+
+        seller_types?.let { st ->
+            groups += SearchFilter(
+                type = st.type.orEmpty(),
+                title = st.title.orEmpty(),
+                options = st.options?.map { opt ->
+                    FilterOption(
+                        id = opt.id.orEmpty(),
+                        titleFa = opt.title_fa.orEmpty(),
+                        titleEn = opt.title_en,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        has_selling_stock?.let { hs ->
+            groups += SearchFilter(
+                type = hs.type.orEmpty(),
+                title = hs.title.orEmpty(),
+                options = hs.options?.map { opt ->
+                    FilterOption(
+                        id = "stock",
+                        titleFa = opt.title_fa.orEmpty(),
+                        titleEn = opt.title_en,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        digiplus?.let { dp ->
+            groups += SearchFilter(
+                type = dp.type.orEmpty(),
+                title = dp.title.orEmpty(),
+                options = dp.options?.map { opt ->
+                    FilterOption(
+                        id = opt.id.orEmpty(),
+                        titleFa = opt.title_fa.orEmpty(),
+                        titleEn = opt.title_en,
+                        icon = opt.icon,
+                        iconColor = opt.icon_color,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        has_jet_delivery?.let { jetDelivery ->
+            groups += SearchFilter(
+                type = jetDelivery.type.orEmpty(),
+                title = jetDelivery.title.orEmpty(),
+                options = listOf(
+                    FilterOption(
+                        id = "jet_delivery",
+                        titleFa = jetDelivery.title ?: "ارسال فوری",
+                        icon = jetDelivery.icon,
+                        iconColor = jetDelivery.icon_color,
+                        isSelected = mutableStateOf(false)
+                    )
+                )
+            )
+        }
+
+        only_fresh?.let { fresh ->
+            groups += SearchFilter(
+                type = fresh.type.orEmpty(),
+                title = fresh.title.orEmpty(),
+                options = fresh.options?.map { opt ->
+                    FilterOption(
+                        id = "fresh",
+                        titleFa = opt.title_fa ?: "فقط سوپرمارکتی",
+                        titleEn = opt.title_en,
+                        icon = fresh.icon,
+                        iconColor = fresh.icon_color,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        has_ship_by_seller?.let { hss ->
+            groups += SearchFilter(
+                type = hss.type.orEmpty(),
+                title = hss.title.orEmpty(),
+                options = hss.options?.map { opt ->
+                    FilterOption(
+                        id = "ship_by_seller",
+                        titleFa = opt.title_fa.orEmpty(),
+                        titleEn = opt.title_en,
+                        icon = hss.icon,
+                        iconColor = hss.icon_color,
+                        description = hss.description,
+                        isSelected = mutableStateOf(false)
+                    )
+                }.orEmpty()
+            )
+        }
+
+        return groups
+
+    }
+
+
+//    fun toggleFilter(filterId: String) {
+//        _filters.value = _filters.value.map { item ->
+//            if (item.id == filterId) {
+//                item.copy(isSelected = !item.isSelected)
+//            } else item
+//        }.sortedWith(compareByDescending<FilterItem> { it.isSelected }
+//            .thenBy { it.originalIndex })
+//    }
 }

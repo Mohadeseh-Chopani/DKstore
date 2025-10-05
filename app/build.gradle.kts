@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.androidx.datastore.core.android)
 //    implementation(libs.androidx.datastore.core.jvm)
     implementation(libs.datastore.preferences)
+    implementation(libs.androidx.compose.material3)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx)
 

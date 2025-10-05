@@ -10,4 +10,9 @@ object Const {
     const val TECHNICAL_INFORMATION = "مشخصات فنی"
     const val SEARCH = "سرچ"
     const val SHOW_MORE = "نمایش همه"
+
+    object searchType {
+        const val MAIN_SEARCH_BOX = "باکس سرچ اصلی"
+        const val FILTERS_SEARCH_BOX = "باکس سرچ فیلترها"
+    }
 }
