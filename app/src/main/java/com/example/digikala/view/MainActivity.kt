@@ -1776,6 +1776,9 @@ fun ProductDetails() {
     val data: ProductPageData
 
     when (productData.value) {
+        is NetworkState.Uninitialized -> {
+
+        }
         is NetworkState.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -2881,6 +2884,10 @@ fun AttributeInformationPage() {
     val attributeData = productViewModel.attributeInformation.collectAsState()
 
     when (attributeData.value) {
+        is NetworkState.Uninitialized -> {
+
+        }
+
         is NetworkState.Loading -> {
 
         }
@@ -2982,6 +2989,10 @@ fun CategoriesPage() {
     }
 
     when (categoriesData.value) {
+        is NetworkState.Uninitialized -> {
+
+        }
+
         is NetworkState.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -3327,6 +3338,9 @@ fun SearchPage(query: String) {
 
     LaunchedEffect(data) {
         when (data) {
+            is NetworkState.Uninitialized -> {
+
+            }
             is NetworkState.Loading -> {
                 if (searchViewModel.currentPage > 1) {
                     showBottomLoader.value = true
@@ -3426,7 +3440,9 @@ fun SearchPage(query: String) {
     }
     LaunchedEffect(Unit) {
         if (searchViewModel.cachedProducts.isEmpty()) {
-            searchViewModel.getSearchData(query)
+            if (query != "") {
+                searchViewModel.getSearchData(query)
+            }
         }
     }
 }
@@ -3506,12 +3522,14 @@ fun choiceFilterCheckBoxType(items: SearchFilter) {
             modifier = Modifier,
             horizontalArrangement = Arrangement.Absolute.SpaceEvenly
         ) {
-            Text(
-                text = items.title,
-                fontFamily = MyCustomFont,
-                fontWeight = FontWeight.Medium,
-                fontSize = 16.sp
-            )
+            items.title?.let {
+                Text(
+                    text = it,
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp
+                )
+            }
 
             Icon(Icons.Default.Close, contentDescription = null)
         }
@@ -3803,6 +3821,9 @@ fun ShowMorePage(query: String) {
 
     LaunchedEffect(searchData) {
         when (searchData) {
+            is NetworkState.Uninitialized -> {
+
+            }
             is NetworkState.Loading -> {
                 if (searchViewModel.currentPage > 1) {
                     showBottomLoader.value = true

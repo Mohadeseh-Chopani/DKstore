@@ -31,7 +31,7 @@ class SearchViewModel(val searchRepositoryImp: SearchRepositoryImp) : ViewModel(
     val filters: StateFlow<List<SearchFilter>?> get() = _filters
 
 
-    val _searchData = MutableStateFlow<NetworkState<SearchData>>(NetworkState.Loading)
+    val _searchData = MutableStateFlow<NetworkState<SearchData>>(NetworkState.Uninitialized)
     val searchData: StateFlow<NetworkState<SearchData>> get() = _searchData
 
     fun getSearchData(query: String) {

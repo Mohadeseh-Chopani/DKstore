@@ -31,6 +31,7 @@ class HomeViewModel(val homeRepositoryImp: HomeRepositoryImp) : ViewModel() {
                 .catch { emit(NetworkState.Failure(it)) }
                 .map { networkState ->
                     when (networkState) {
+                        is NetworkState.Uninitialized -> HomeScreenState()
                         is NetworkState.Loading -> HomeScreenState(isLoading = true)
                         is NetworkState.Success -> HomeScreenState(homeData = networkState.data)
                         is NetworkState.Failure -> HomeScreenState(error = "خطا در دریافت اطلاعات")
