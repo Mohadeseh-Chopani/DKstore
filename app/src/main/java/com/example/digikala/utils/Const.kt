@@ -15,4 +15,10 @@ object Const {
         const val MAIN_SEARCH_BOX = "باکس سرچ اصلی"
         const val FILTERS_SEARCH_BOX = "باکس سرچ فیلترها"
     }
+
+    object filterType {
+        const val CHECKBOX = "checkbox"
+        const val SWITCH = "switch"
+        const val SLIDER = "slider"
+    }
 }

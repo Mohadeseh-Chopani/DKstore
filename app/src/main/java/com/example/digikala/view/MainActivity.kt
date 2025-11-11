@@ -4,6 +4,7 @@ package com.example.digikala.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -63,6 +64,9 @@ import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -125,6 +129,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.core.graphics.drawable.IconCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -1779,6 +1784,7 @@ fun ProductDetails() {
         is NetworkState.Uninitialized -> {
 
         }
+
         is NetworkState.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -3341,6 +3347,7 @@ fun SearchPage(query: String) {
             is NetworkState.Uninitialized -> {
 
             }
+
             is NetworkState.Loading -> {
                 if (searchViewModel.currentPage > 1) {
                     showBottomLoader.value = true
@@ -3451,11 +3458,11 @@ fun SearchPage(query: String) {
 @Composable
 fun filterItemDesign(item: SearchFilter) {
     var openBottomSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Row(
         modifier = Modifier
-            .padding(horizontal = 4.dp, vertical = 8.dp)
+            .padding(horizontal = 8.dp, vertical = 8.dp)
             .background(color = White, shape = RoundedCornerShape(10.dp))
             .border(0.5.dp, color = Color.LightGray, shape = RoundedCornerShape(10.dp))
             .clickable {
@@ -3477,7 +3484,7 @@ fun filterItemDesign(item: SearchFilter) {
                 modifier = Modifier
                     .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                     .then(
-                        if (item.type != "switch") {
+                        if (item.type == "checkbox") {
                             Modifier.padding(end = 4.dp)
                         } else {
                             Modifier.padding(end = 8.dp)
@@ -3486,9 +3493,17 @@ fun filterItemDesign(item: SearchFilter) {
             )
         }
 
-        if (item.type != "switch") {
+        if (item.type == "checkbox") {
             Icon(
                 Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(end = 4.dp)
+            )
+        } else {
+            Icon(
+                Icons.Default.Star,
+                tint = PrimaryColor,
                 contentDescription = null,
                 modifier = Modifier
                     .padding(end = 4.dp)
@@ -3499,12 +3514,67 @@ fun filterItemDesign(item: SearchFilter) {
     if (openBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { openBottomSheet = false },
-            sheetState = sheetState
+            sheetState = sheetState,
+            modifier = Modifier
+//                .fillMaxHeight(0.6f)
         ) {
-            item.options?.let { options ->
-                for (children in options) {
-                    choiceFilterCheckBoxType(item)
+            when (item.type) {
+                Const.filterType.CHECKBOX -> {
+                    item.options?.let { options ->
+                        choiceFilterCheckBoxType(item)
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun buttonsBoxInFilterModal() {
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Button(
+                onClick = {
+
+                },
+                colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor),
+                shape = RoundedCornerShape(5)
+            ) {
+                Text(
+                    text = "نمایش محصولات",
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+            }
+
+            Button(
+                onClick = {
+
+                },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray),
+                shape = RoundedCornerShape(5)
+            ) {
+                Text(
+                    text = "حذف فیلتر",
+                    fontFamily = MyCustomFont,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
             }
         }
     }
@@ -3542,16 +3612,21 @@ fun choiceFilterCheckBoxType(items: SearchFilter) {
             Const.searchType.FILTERS_SEARCH_BOX
         )
 
-        LazyColumn {
-            items.options?.size?.let {size ->
-                items(size) {index ->
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f) //  makes only this part scroll
+        ) {
+            items.options?.size?.let { size ->
+                items(size) { index ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth()
                     ) {
                         Checkbox(
-                            checked = items.options.get(index).isSelected.value,
-                            onCheckedChange = { items.options.get(index).isSelected.value = it },
+                            checked = items.options.get(index)?.is_selected?.value == true,
+                            onCheckedChange = { items.options.get(index)?.is_selected?.value = it },
                             colors = CheckboxDefaults.colors(
                                 checkedColor = PrimaryColor,
                                 uncheckedColor = Color.Gray,
@@ -3561,15 +3636,27 @@ fun choiceFilterCheckBoxType(items: SearchFilter) {
                         Spacer(modifier = Modifier.width(4.dp))
                         items.options?.get(index)?.let { it1 ->
                             Text(
-                                text = it1?.titleFa!!,
+                                text = it1?.title_fa!!,
                                 fontFamily = MyCustomFont,
                                 fontWeight = FontWeight.Normal
                             )
+
+                            it1.title_en?.let {
+                                Text(
+                                    text = it,
+                                    fontFamily = MyCustomFont,
+                                    fontWeight = FontWeight.Normal,
+                                    textAlign = TextAlign.End,
+                                    color = Color.Gray,
+                                    modifier = Modifier
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+        buttonsBoxInFilterModal()
     }
 }
 
@@ -3824,6 +3911,7 @@ fun ShowMorePage(query: String) {
             is NetworkState.Uninitialized -> {
 
             }
+
             is NetworkState.Loading -> {
                 if (searchViewModel.currentPage > 1) {
                     showBottomLoader.value = true

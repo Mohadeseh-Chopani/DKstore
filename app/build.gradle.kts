@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,11 +8,12 @@ plugins {
 
 android {
     namespace = "com.example.digikala"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.digikala"
         minSdk = 26
+        //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -89,6 +89,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.icons.core)
+    implementation(libs.icons.extended)
 
 //    slider
     implementation(libs.accompanist.pager)

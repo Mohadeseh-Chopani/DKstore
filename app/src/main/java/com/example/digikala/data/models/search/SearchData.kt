@@ -32,84 +32,54 @@ data class Result(
 )
 
 data class Filters(
-    val categories: FiltersCategories,
-    val brands: FiltersBrands,
-    val price: FiltersPrice,
-    val seller_types: FiltersSeller_types,
-    val has_selling_stock: FiltersHas_selling_stock,
-    val has_ready_to_shipment: FiltersHas_ready_to_shipment,
+    val categories: FilterCategory,
+    val brands: FilterCategory,
+    val price: FilterPrice,
+    val color_palettes: FilterColorPalettes,
+    val seller_types: FilterSellerTypes,
+    val attributes: FilterAttribute,
+    val has_selling_stock: FiltersHasSellingStock,
+    val has_ready_to_shipment: FiltersHasReadyToShipment,
     val digiplus: FiltersDigiplus,
-    val has_jet_delivery: FiltersHas_jet_delivery,
-    val only_fresh: FiltersOnly_fresh,
-    val has_ship_by_seller: FiltersHas_ship_by_seller,
+    val has_jet_delivery: FiltersHasJetDelivery,
+    val only_fresh: FiltersOnlyFresh,
+    val has_ship_by_seller: FiltersHasShipBySeller,
 )
 
-data class FiltersCategories(
+
+data class FiltersHasShipBySeller(
     val title: String? = null,
-    val options: List<FiltersCategoriesOptionsItem>? = null,
-    val type: String? = null
+    val icon: String? = null,
+    val icon_color: String? = null,
+    val options: List<FiltersHasShipBySellerOptionsItem>? = null,
+    val type: String? = null,
+    val description: String? = null
 )
 
-data class FiltersCategoriesOptionsItem(
-    val id: Int? = null,
+data class FiltersHasShipBySellerOptionsItem(
     val title_fa: String? = null,
     val title_en: String? = null
 )
 
-data class FiltersBrands(
+data class FiltersOnlyFresh(
     val title: String? = null,
-    val options: List<BrandsOptionsItem>? = null,
+    val icon: String? = null,
+    val icon_color: String? = null,
+    val options: List<FiltersOnlyFreshOptionsItem>? = null,
     val type: String? = null
 )
 
-data class BrandsOptionsItem(
-    val id: Int? = null,
+data class FiltersOnlyFreshOptionsItem(
     val title_fa: String? = null,
     val title_en: String? = null
 )
 
-data class FiltersPrice(
+
+data class FiltersHasJetDelivery(
     val title: String? = null,
-    val options: FiltersPriceOptions? = null,
+    val icon: String? = null,
+    val icon_color: String? = null,
     val type: String? = null
-)
-
-data class FiltersPriceOptions(
-    val max: Long? = null
-)
-
-data class FiltersSeller_types(
-    val title: String? = null,
-    val options: List<FiltersSeller_typesOptionsItem>? = null,
-    val type: String? = null
-)
-
-data class FiltersSeller_typesOptionsItem(
-    val id: String? = null,
-    val title_fa: String? = null,
-    val title_en: String? = null
-)
-
-data class FiltersHas_selling_stock(
-    val title: String? = null,
-    val options: List<FiltersHas_selling_stockOptionsItem>? = null,
-    val type: String? = null
-)
-
-data class FiltersHas_selling_stockOptionsItem(
-    val title_fa: String? = null,
-    val title_en: String? = null
-)
-
-data class FiltersHas_ready_to_shipment(
-    val title: String? = null,
-    val options: List<FiltersHas_ready_to_shipmentOptionsItem>? = null,
-    val type: String? = null
-)
-
-data class FiltersHas_ready_to_shipmentOptionsItem(
-    val title_fa: String? = null,
-    val title_en: String? = null
 )
 
 data class FiltersDigiplus(
@@ -128,38 +98,84 @@ data class FiltersDigiplusOptionsItem(
     val icon_color: String? = null
 )
 
-data class FiltersHas_jet_delivery(
+
+data class FiltersHasReadyToShipment(
     val title: String? = null,
-    val icon: String? = null,
-    val icon_color: String? = null,
+    val options: List<FiltersHasReadyToShipmentOptionsItem>? = null,
     val type: String? = null
 )
 
-data class FiltersOnly_fresh(
-    val title: String? = null,
-    val icon: String? = null,
-    val icon_color: String? = null,
-    val options: List<FiltersOnly_freshOptionsItem>? = null,
-    val type: String? = null
-)
-
-data class FiltersOnly_freshOptionsItem(
+data class FiltersHasReadyToShipmentOptionsItem(
     val title_fa: String? = null,
     val title_en: String? = null
 )
 
-data class FiltersHas_ship_by_seller(
+data class FiltersHasSellingStock(
     val title: String? = null,
-    val icon: String? = null,
-    val icon_color: String? = null,
-    val options: List<FiltersHas_ship_by_sellerOptionsItem>? = null,
-    val type: String? = null,
+    val options: List<FiltersHasSellingStockOptionsItem>? = null,
+    val type: String? = null
+)
+
+data class FiltersHasSellingStockOptionsItem(
+    val title_fa: String? = null,
+    val title_en: String? = null
+)
+
+data class FilterCategory(
+    val title: String? = null,
+    val options: List<FilterOption>? = null,
+    val type: String? = null
+)
+
+data class FilterPrice(
+    val title: String? = null,
+    val options: PriceRange? = null,
+    val type: String? = null
+)
+
+data class PriceRange(
+    val min: Long? = null,
+    val max: Long? = null
+)
+
+data class FilterColorPalettes(
+    val title: String? = null,
+    val options: List<ColorOption>? = null,
+    val type: String? = null
+)
+
+data class ColorOption(
+    val id: Int? = null,
+    val title_fa: String? = null,
+    val title_en: String? = null,
+    val code: String? = null,
+    val image_url: String? = null,
     val description: String? = null
 )
 
-data class FiltersHas_ship_by_sellerOptionsItem(
+data class FilterSellerTypes(
+    val title: String? = null,
+    val options: List<SellerTypeOption>? = null,
+    val type: String? = null
+)
+
+data class SellerTypeOption(
+    val id: String? = null,
     val title_fa: String? = null,
     val title_en: String? = null
+)
+
+data class AttributeSubFilter(
+    val title: String? = null,
+    val options: List<FilterOption>? = null,
+    val type: String? = null,
+    val id: Int? = null
+)
+
+data class FilterAttribute(
+    val title: String? = null,
+    val options: List<AttributeSubFilter>? = null,
+    val type: String? = null
 )
 
 data class Sort(
@@ -654,15 +670,15 @@ data class ProductsItemProduct_badge(
 data class SearchFilter(
     val type: String? = null,
     val title: String? = null,
-    val options: List<FilterOption>? = null
+    val options: List<FilterOption?>? = null
 )
 
 data class FilterOption(
     val id: String,
-    val titleFa: String,
-    val titleEn: String? = null,
+    val title_fa: String,
+    val title_en: String? = null,
     val icon: String? = null,
-    val iconColor: String? = null,
+    val icon_color: String? = null,
     val description: String? = null,
-    var isSelected: MutableState<Boolean> = mutableStateOf(false)
+    var is_selected: MutableState<Boolean> = mutableStateOf(false)
 )
