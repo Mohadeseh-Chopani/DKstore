@@ -4,7 +4,6 @@ package com.example.digikala.view
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -64,9 +63,6 @@ import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -129,7 +125,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
-import androidx.core.graphics.drawable.IconCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -3466,14 +3461,14 @@ fun filterItemDesign(item: SearchFilter) {
             .background(color = White, shape = RoundedCornerShape(10.dp))
             .border(0.5.dp, color = Color.LightGray, shape = RoundedCornerShape(10.dp))
             .clickable {
-                openBottomSheet = true
+                if (!item.options.isNullOrEmpty() && item.options.size > 1) {
+                    openBottomSheet = true
+                }
             },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        Log.d("MOX", "title: " + item.title)
-        Log.i("MOX", "type: " + item.type)
 
         item?.title?.let {
             Text(
@@ -3494,12 +3489,16 @@ fun filterItemDesign(item: SearchFilter) {
         }
 
         if (item.type == "checkbox") {
-            Icon(
-                Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(end = 4.dp)
-            )
+            item.options?.let {
+                if (it.size > 1) {
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                    )
+                }
+            }
         } else {
             Icon(
                 Icons.Default.Star,
@@ -3521,7 +3520,7 @@ fun filterItemDesign(item: SearchFilter) {
             when (item.type) {
                 Const.filterType.CHECKBOX -> {
                     item.options?.let { options ->
-                        choiceFilterCheckBoxType(item)
+                        choiceFilterCheckBoxType(item, {openBottomSheet = false})
                     }
                 }
             }
@@ -3537,22 +3536,24 @@ fun buttonsBoxInFilterModal() {
         modifier = Modifier
             .fillMaxWidth()
             .background(White)
-            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        ) {5455
 
             Button(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 2.dp),
                 onClick = {
 
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryColor),
-                shape = RoundedCornerShape(5)
+                shape = RoundedCornerShape(15)
             ) {
                 Text(
                     text = "نمایش محصولات",
@@ -3563,11 +3564,13 @@ fun buttonsBoxInFilterModal() {
             }
 
             Button(
+                modifier = Modifier
+                    .padding(horizontal = 2.dp),
                 onClick = {
 
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray),
-                shape = RoundedCornerShape(5)
+                shape = RoundedCornerShape(15)
             ) {
                 Text(
                     text = "حذف فیلتر",
@@ -3580,10 +3583,10 @@ fun buttonsBoxInFilterModal() {
     }
 }
 
-@Preview
 @OptIn(ExperimentalMaterial3Api::class)
+@Preview
 @Composable
-fun choiceFilterCheckBoxType(items: SearchFilter) {
+fun choiceFilterCheckBoxType(items: SearchFilter, bottomSheetAction: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -3597,18 +3600,27 @@ fun choiceFilterCheckBoxType(items: SearchFilter) {
                     text = it,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
                 )
             }
 
-            Icon(Icons.Default.Close, contentDescription = null)
+            Icon(
+                Icons.Default.Close,
+                contentDescription = null,
+                modifier = Modifier
+                    .clickable {
+                        bottomSheetAction()
+                    }
+            )
         }
 
         CustomOutlinedTextField(
             onSearch = { query ->
 
             },
-            "جستجودر${items.title}",
+            " جستجودر ${items.title}",
             Const.searchType.FILTERS_SEARCH_BOX
         )
 
@@ -3638,6 +3650,7 @@ fun choiceFilterCheckBoxType(items: SearchFilter) {
                             Text(
                                 text = it1?.title_fa!!,
                                 fontFamily = MyCustomFont,
+                                textAlign = TextAlign.Start,
                                 fontWeight = FontWeight.Normal
                             )
 
@@ -3699,7 +3712,13 @@ fun CustomOutlinedTextField(onSearch: ((String) -> Unit)?, searchDescription: St
     OutlinedTextField(
         value = searchText,
         onValueChange = { newText -> searchText = newText },
-        label = { Text(searchDescription) },
+        label = {
+            Text(
+                searchDescription,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Medium
+            )
+        },
         singleLine = true,
         colors = colors,
         modifier = Modifier
